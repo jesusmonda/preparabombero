@@ -9,6 +9,6 @@ export class Ip {
   @Column({ type: "varchar", nullable: false, unique: false, length: 20 })
   ip: string;
 
-  @ManyToOne(() => User, (user) => user.ips)
+  @ManyToOne(() => User, (user) => user.ips, { onUpdate: "CASCADE", onDelete: "CASCADE" })
   user: User
 }

@@ -10,6 +10,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { QuizModule } from './modules/quiz/quiz.module';
 import { UserGuard } from './common/guards/user.guard';
 import { APP_GUARD } from '@nestjs/core';
+import { TopicModule } from './modules/topic/topic.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { APP_GUARD } from '@nestjs/core';
     AuthModule,
     HealthModule,
     QuizModule,
+    TopicModule,
   ],
   controllers: [AppController],
   providers: [

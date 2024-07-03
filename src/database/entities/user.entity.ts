@@ -26,6 +26,9 @@ export class User {
   @Column({ type: "enum", enum:UserRole, default: UserRole.USER, nullable: false, unique: false })
   role: string;
 
+  @Column({ type: "boolean", default: false, nullable: false, unique: false })
+  subscribed: string;
+
   @OneToMany(() => Ip, (ip) => ip.user)
   ips: Ip[]
 }

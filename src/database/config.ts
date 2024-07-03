@@ -10,7 +10,7 @@ const config = {
     database: 'preparabombero',
     entities: ["dist/database/entities/*.entity.js"],
     migrations: ["dist/database/migrations/*.js"],
-    synchronize: true, // false on production
+    synchronize: true, // false on production for security
 }
 
 export default registerAs('typeorm', () => config)
