@@ -1,0 +1,26 @@
+services:
+  app:
+    network_mode: host
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "npm run start:debug"
+    ports:
+      - 3000:3000
+    volumes:
+      - '.:/app'
+  database:
+    network_mode: host
+    image: postgres:14-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - database:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_USER=admin
+      - POSTGRES_DB=preparabombero
+
+volumes:
+  database:
