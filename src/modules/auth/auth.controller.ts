@@ -3,8 +3,8 @@ import { AuthService } from './auth.service';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { RegisterAuthDto } from './dto/register-auth.dto';
 import * as bcrypt from 'bcryptjs';
-import { User } from 'src/database/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
+import { User } from '@prisma/client';
 
 @Controller('auth')
 export class AuthController {

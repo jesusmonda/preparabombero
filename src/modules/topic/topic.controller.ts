@@ -1,20 +1,23 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { TopicService } from './topic.service';
 import { UserGuard } from 'src/common/guards/user.guard';
-import { Quiz } from '../quiz/entities/quiz.entity';
+import { Quiz } from '@prisma/client';
 
 type Topic = {
   id: number;
   title: string;
   categoryTitle: string;
-  quizCount: number;
-  subtopic: Topic[];
-  quizs: Quiz[];
+  quizCount?: number;
+  parentId: number;
+  subtopics?: Topic[];
+  quizzes?: Quiz[];
 };
 
 type quizCount = {
   topicId: number;
-  count: number;
+  _count: {
+    topicId: number
+  };
 };
 
 type GroupedTopics = {
@@ -28,29 +31,30 @@ export class TopicController {
   @UseGuards(UserGuard)
   @Get()
   async findAll() {
-    const topics: any[] = await this.topicService.findTopics();
-    const quizCount: quizCount[] = await this.topicService.countQuizs();
-    return this.transformTopics(topics, quizCount);
+    const topics: Topic[] = await this.topicService.findTopics();
+    const quizzesCount: quizCount[] = await this.topicService.quizCount();
+    return this.transformTopics(topics, quizzesCount);
   }
 
-  transformTopics = (topics: Topic[], quizCount: quizCount[]): GroupedTopics => {
+  transformTopics = (topics: Topic[], quizzesCount: quizCount[]): GroupedTopics => {
     const groupedTopics: GroupedTopics = {};
 
     // Mapa de todos los topics por id para facilitar la búsqueda
     const topicMap: { [key: number]: Topic } = {};
     topics.forEach(topic => {
-      topicMap[topic.id] = { ...topic, subtopic: [], quizCount: quizCount.find(x => x.topicId == topic.id)?.count || 0 };
-      delete topicMap[topic.id]?.quizs;
+      topicMap[topic.id] = { ...topic, subtopics: [] };
+      delete topicMap[topic.id]?.quizzes;
     });
   
-    // Construir la jerarquía de subtopics
+    // Construir la jerarquía de subtopicss
     topics.forEach(topic => {
-      if (topic.subtopic && topic.subtopic.length > 0) {
-        topic.subtopic.forEach(sub => {
-          topicMap[sub.id] = { ...sub, quizCount: quizCount.find(x => x.topicId == sub.id)?.count || 0, subtopic: topicMap[sub.id]?.subtopic || [] };
+      if (topic.subtopics && topic.subtopics.length > 0) {
+        topic.subtopics.forEach(sub => {
+          const quizCount = quizzesCount.find(x => x.topicId == topic.id)?._count.topicId || 0;
+          topicMap[sub.id] = { ...sub, quizCount: quizCount, subtopics: topicMap[sub.id]?.subtopics || [] };
         });
-        topicMap[topic.id].subtopic = topic.subtopic.map(sub => topicMap[sub.id]);
-        topicMap[topic.id].quizCount = quizCount.find(x => x.topicId == topic.id)?.count || 0
+        topicMap[topic.id].subtopics = topic.subtopics.map(sub => topicMap[sub.id]);
+        delete topicMap[topic.id].quizCount
       }
     });
   
@@ -65,7 +69,6 @@ export class TopicController {
         }
       }
     });
-  
     return groupedTopics;
   };
 }
