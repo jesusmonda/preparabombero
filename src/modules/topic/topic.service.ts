@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { Topic } from '@prisma/client';
+import { QuizCount, TopicAndSubtopics } from 'src/common/interfaces/topic.interface';
 import { PrismaService } from 'src/common/services/database.service';
 
 @Injectable()
@@ -7,21 +9,20 @@ export class TopicService {
     private prisma: PrismaService,
   ) {}
 
-  async findTopics() {
+  async findTopics() : Promise<(TopicAndSubtopics[])> {
     return await this.prisma.topic.findMany({
       include: {
-        subtopics: true,
-        quizzes: true
+        subtopics: true
       }
     });
   }
 
-  async quizCount() {
+  async quizCount(): Promise<any> {
     return await this.prisma.quiz.groupBy({
       by: ['topicId'],
       _count: {
         topicId: true
-      },
+      }
     });
   }
 }

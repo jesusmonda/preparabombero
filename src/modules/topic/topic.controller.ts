@@ -1,27 +1,14 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { TopicService } from './topic.service';
 import { UserGuard } from 'src/common/guards/user.guard';
-import { Quiz } from '@prisma/client';
+import { QuizCount, TopicAndSubtopics } from 'src/common/interfaces/topic.interface';
+import { Topic } from '@prisma/client';
 
-type Topic = {
-  id: number;
-  title: string;
-  categoryTitle: string;
-  quizCount?: number;
-  parentId: number;
-  subtopics?: Topic[];
-  quizzes?: Quiz[];
-};
-
-type quizCount = {
-  topicId: number;
-  _count: {
-    topicId: number
-  };
-};
-
-type GroupedTopics = {
-  [key: string]: Topic[];
+type TopicsResponse = {
+  [key: string]: (TopicAndSubtopics & {
+    quizCount: number;
+    expanded: boolean;
+  })[];
 };
 
 @Controller('topic')
@@ -31,44 +18,71 @@ export class TopicController {
   @UseGuards(UserGuard)
   @Get()
   async findAll() {
-    const topics: Topic[] = await this.topicService.findTopics();
-    const quizzesCount: quizCount[] = await this.topicService.quizCount();
-    return this.transformTopics(topics, quizzesCount);
+    const topics: TopicAndSubtopics[] = await this.topicService.findTopics();
+    const quizzesCount: QuizCount[] = await this.topicService.quizCount();
+    return this.transformTopics(topics, quizzesCount)
   }
 
-  transformTopics = (topics: Topic[], quizzesCount: quizCount[]): GroupedTopics => {
-    const groupedTopics: GroupedTopics = {};
-
-    // Mapa de todos los topics por id para facilitar la búsqueda
-    const topicMap: { [key: number]: Topic } = {};
-    topics.forEach(topic => {
-      topicMap[topic.id] = { ...topic, subtopics: [] };
-      delete topicMap[topic.id]?.quizzes;
-    });
+  transformTopics = (topics: Topic[], quizzesCount: QuizCount[]): TopicsResponse => {
+    // Función auxiliar para obtener el conteo de quizzes para un topic
+    const getQuizCount = (topicId: number): number => {
+      const quizCount = quizzesCount.find(q => q.topicId === topicId);
+      return quizCount ? quizCount._count.topicId : 0;
+    };
   
-    // Construir la jerarquía de subtopicss
-    topics.forEach(topic => {
-      if (topic.subtopics && topic.subtopics.length > 0) {
-        topic.subtopics.forEach(sub => {
-          const quizCount = quizzesCount.find(x => x.topicId == topic.id)?._count.topicId || 0;
-          topicMap[sub.id] = { ...sub, quizCount: quizCount, subtopics: topicMap[sub.id]?.subtopics || [] };
-        });
-        topicMap[topic.id].subtopics = topic.subtopics.map(sub => topicMap[sub.id]);
-        delete topicMap[topic.id].quizCount
+    // Crear un mapa de todos los topics por id
+    const topicMap = new Map(topics.map(topic => [topic.id, { ...topic, subtopics: [] }]));
+  
+    // Construir la estructura jerárquica
+    topicMap.forEach(topic => {
+      if (topic.parentId !== null && topicMap.has(topic.parentId)) {
+        topicMap.get(topic.parentId).subtopics.push(topic);
       }
     });
+  
+    // Función para transformar un solo topic
+    const transformTopic = (topic: any): any => {
+      const directQuizCount = getQuizCount(topic.id);
+      const subtopics = topic.subtopics
+        .map(transformTopic)
+        .sort((a, b) => a.order - b.order);
+      
+      const totalQuizCount = directQuizCount + subtopics.reduce((sum, sub) => sum + sub.quizCount, 0);
+  
+      return {
+        id: topic.id,
+        title: topic.title,
+        categoryTitle: topic.categoryTitle || null,
+        parentId: topic.parentId,
+        expanded: !!topic.categoryTitle,
+        quizCount: totalQuizCount,
+        order: topic.order,
+        subtopics
+      };
+    };
+  
+    // Transformar y ordenar los topics de nivel superior
+    const transformedTopics = Array.from(topicMap.values())
+      .filter(topic => topic.parentId === null)
+      .map(transformTopic)
+      .sort((a, b) => a.order - b.order);
   
     // Agrupar por categoryTitle
-    topics.forEach(topic => {
+    const groupedTopics = transformedTopics.reduce((acc, topic) => {
       if (topic.categoryTitle) {
-        if (!groupedTopics[topic.categoryTitle]) {
-          groupedTopics[topic.categoryTitle] = [];
+        if (!acc[topic.categoryTitle]) {
+          acc[topic.categoryTitle] = [];
         }
-        if (!groupedTopics[topic.categoryTitle].some(t => t.id === topic.id)) {
-          groupedTopics[topic.categoryTitle].push(topicMap[topic.id]);
-        }
+        acc[topic.categoryTitle].push(topic);
       }
+      return acc;
+    }, {});
+  
+    // Ordenar los topics dentro de cada categoría
+    Object.keys(groupedTopics).forEach(category => {
+      groupedTopics[category].sort((a, b) => a.order - b.order);
     });
+  
     return groupedTopics;
   };
 }

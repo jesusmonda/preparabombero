@@ -34,6 +34,10 @@ export class AuthController {
       throw new HttpException('Found user', HttpStatus.BAD_REQUEST);
     }
 
+    if (registerAuthDto.password !== registerAuthDto.repeatPassword) {
+      throw new HttpException('Password not match', HttpStatus.BAD_REQUEST);
+    }
+
     registerAuthDto.password = await bcrypt.hash(registerAuthDto.password, await bcrypt.genSalt());
     await this.authService.create(registerAuthDto);
   }

@@ -38,6 +38,7 @@ model Topic {
   parentId      Int?
   subtopics     Topic[] @relation("Subtopics")
   quizzes       Quiz[]
+  order         Int @default(0)
 }
 
 model Quiz {
