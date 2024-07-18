@@ -1,11 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, BadRequestException, Get, Post, Put, Delete, Body, HttpStatus, Param, HttpException, UseGuards } from '@nestjs/common';
 import { TopicService } from './topic.service';
 import { UserGuard } from 'src/common/guards/user.guard';
-import { QuizCount, TopicAndSubtopics } from 'src/common/interfaces/topic.interface';
+import { QuizCount, TopicAndTopics } from 'src/common/interfaces/topic.interface';
 import { Topic } from '@prisma/client';
+import { AdminGuard } from 'src/common/guards/admin.guard';
+import { CreateTopicDto } from './dto/create-topic.dto';
 
 type TopicsResponse = {
-  [key: string]: (TopicAndSubtopics & {
+  [key: string]: (TopicAndTopics & {
     quizCount: number;
     expanded: boolean;
   })[];
@@ -18,7 +20,7 @@ export class TopicController {
   @UseGuards(UserGuard)
   @Get()
   async findAll() {
-    const topics: TopicAndSubtopics[] = await this.topicService.findTopics();
+    const topics: TopicAndTopics[] = await this.topicService.findTopics();
     const quizzesCount: QuizCount[] = await this.topicService.quizCount();
     return this.transformTopics(topics, quizzesCount)
   }
@@ -31,33 +33,32 @@ export class TopicController {
     };
   
     // Crear un mapa de todos los topics por id
-    const topicMap = new Map(topics.map(topic => [topic.id, { ...topic, subtopics: [] }]));
+    const topicMap = new Map(topics.map(topic => [topic.id, { ...topic, topics: [] }]));
   
     // Construir la estructura jerárquica
     topicMap.forEach(topic => {
       if (topic.parentId !== null && topicMap.has(topic.parentId)) {
-        topicMap.get(topic.parentId).subtopics.push(topic);
+        topicMap.get(topic.parentId).topics.push(topic);
       }
     });
   
     // Función para transformar un solo topic
     const transformTopic = (topic: any): any => {
       const directQuizCount = getQuizCount(topic.id);
-      const subtopics = topic.subtopics
+      const topics = topic.topics
         .map(transformTopic)
         .sort((a, b) => a.order - b.order);
       
-      const totalQuizCount = directQuizCount + subtopics.reduce((sum, sub) => sum + sub.quizCount, 0);
+      const totalQuizCount = directQuizCount + topics.reduce((sum, sub) => sum + sub.quizCount, 0);
   
       return {
         id: topic.id,
         title: topic.title,
         categoryTitle: topic.categoryTitle || null,
-        parentId: topic.parentId,
         expanded: !!topic.categoryTitle,
         quizCount: totalQuizCount,
         order: topic.order,
-        subtopics
+        topics
       };
     };
   
@@ -85,4 +86,48 @@ export class TopicController {
   
     return groupedTopics;
   };
+
+  @Post()
+  @UseGuards(AdminGuard)
+  async create(@Body() createTopicDto: CreateTopicDto) {
+    return await this.topicService.create(createTopicDto);
+  }
+
+  @Put(':id')
+  @UseGuards(AdminGuard)
+  async update(@Param('id') id: string, @Body() createTopicDto: CreateTopicDto) {
+    if (!id || id == '') {
+      throw new BadRequestException();
+    }
+    const idNumber: number = Number(id)
+    if (isNaN(idNumber)) {
+      throw new BadRequestException();
+    }
+
+    let quiz: Topic = await this.topicService.findTopic(idNumber);
+    if (quiz == null) {
+      throw new HttpException('Not found topic', HttpStatus.NOT_FOUND);
+    }
+
+    return await this.topicService.update(idNumber, createTopicDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(AdminGuard)
+  async delete(@Param('id') id: string) {
+    if (!id || id == '') {
+      throw new BadRequestException();
+    }
+    const idNumber: number = Number(id)
+    if (isNaN(idNumber)) {
+      throw new BadRequestException();
+    }
+
+    let quiz: Topic = await this.topicService.findTopic(idNumber);
+    if (quiz == null) {
+      throw new HttpException('Not found topic', HttpStatus.NOT_FOUND);
+    }
+
+    return await this.topicService.delete(idNumber);
+  }
 }

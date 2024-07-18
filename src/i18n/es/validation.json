@@ -3,5 +3,6 @@
     "NOT_EMAIL_VALID": "{property} {value} no es un mail valido",
     "NOT_STRING": "{property} debe ser una cadena de texto",
     "NOT_NUMBER": "{property} debe ser un entero",
-    "NOT_TYPE": "{property} faltan propiedades"
+    "NOT_TYPE": "{property} faltan propiedades",
+    "NOT_ENUM": "{property} valor incorrecto"
 }

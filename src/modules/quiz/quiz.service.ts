@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/common/services/database.service';
 import { Quiz } from '@prisma/client';
 import { QuizOmitResult } from 'src/common/interfaces/quiz.interface';
+import { QuizDto } from 'src/modules/quiz/dto/quiz.dto';
 
 @Injectable()
 export class QuizService {
@@ -9,7 +10,7 @@ export class QuizService {
     private prisma: PrismaService
   ) {}
 
-  async getQuizFromTopicId(topicIds: number[]) : Promise<QuizOmitResult[]>{
+  async getQuizzesFromTopicIds(topicIds: number[]) : Promise<QuizOmitResult[]>{
     let quizs: QuizOmitResult[] = await this.prisma.quiz.findMany({
       select: {
         id: true,
@@ -18,6 +19,7 @@ export class QuizService {
         option2: true,
         option3: true,
         option4: true,
+        result: false,
         topicId: true
       },
       where: {
@@ -30,12 +32,37 @@ export class QuizService {
     return quizs.slice(0, 100)
   }
 
-  async getQuiz(quizId: number) : Promise<Quiz>{
-    let quiz: Quiz = await this.prisma.quiz.findUnique({
+  async findQuiz(quizId: number) : Promise<Quiz>{
+    let reponse: Quiz = await this.prisma.quiz.findUnique({
       where: {
-        id: quizId
+        id: Number(quizId)
       }
     });
-    return quiz
+    return reponse
+  }
+
+  async update(id: number, quizDto: QuizDto) : Promise<Quiz> {
+    let reponse: Quiz = await this.prisma.quiz.update({
+      where: {
+        id: Number(id)
+      },
+      data: quizDto
+    });
+    return reponse
+  }
+  async create(quizDto: QuizDto) : Promise<Quiz> {
+    let reponse: Quiz = await this.prisma.quiz.create({
+      data: quizDto
+    });
+    return reponse
+  }
+
+  async delete(id: number) : Promise<Quiz> {
+    let reponse: Quiz = await this.prisma.quiz.delete({
+      where: {
+        id: Number(id)
+      }
+    });
+    return reponse
   }
 }

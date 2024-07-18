@@ -34,9 +34,9 @@ model Topic {
   id            Int     @id @default(autoincrement())
   title         String  @unique
   categoryTitle String?
-  parent        Topic?  @relation("Subtopics", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parent        Topic?  @relation("Topics", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   parentId      Int?
-  subtopics     Topic[] @relation("Subtopics")
+  topics        Topic[] @relation("Topics")
   quizzes       Quiz[]
   order         Int @default(0)
 }
@@ -51,4 +51,19 @@ model Quiz {
   result  String
   topic   Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   topicId Int
+  reports Report[]
 }
+
+model Report {
+  id      Int    @id @default(autoincrement())
+  reason  String @unique
+  quiz    Quiz  @relation(fields: [quizId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  quizId  Int
+}
+
+model Info {
+  id      Int    @id @default(0)
+  title   String @unique
+  description String @unique
+}
+

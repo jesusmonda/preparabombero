@@ -8,7 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
 @Injectable()
-export class UserGuard implements CanActivate {
+export class AdminGuard implements CanActivate {
   constructor(private jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -27,7 +27,7 @@ export class UserGuard implements CanActivate {
         }
       );
 
-      if (decoded.role == 'USER' || decoded.role == 'ADMIN') {
+      if (decoded.role == 'ADMIN') {
         request['user'] = decoded;
         return true;
       } else {

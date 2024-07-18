@@ -19,8 +19,10 @@ export class AuthService {
 
   async create(registerAuthDto: RegisterAuthDto) : Promise<User>{
     delete registerAuthDto.repeatPassword;
-    return this.prisma.user.create({
+    let response: User = await this.prisma.user.create({
       data: registerAuthDto
     })
+    delete response?.password;
+    return response;
   }
 }

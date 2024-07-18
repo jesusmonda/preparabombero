@@ -39,6 +39,6 @@ export class AuthController {
     }
 
     registerAuthDto.password = await bcrypt.hash(registerAuthDto.password, await bcrypt.genSalt());
-    await this.authService.create(registerAuthDto);
+    return await this.authService.create(registerAuthDto);
   }
 }

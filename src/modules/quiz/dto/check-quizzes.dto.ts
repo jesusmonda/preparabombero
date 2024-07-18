@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { ArrayNotEmpty, IsInt, IsNotEmpty, IsString, ValidateNested } from 'class-validator';
 
-class checkQuizDto {
+class checkQuiz {
     @IsNotEmpty({ message: 'validation.NOT_EMPTY' })
     @IsInt({ message: 'validation.NOT_NUMBER' })
     quizId: number;
@@ -11,9 +11,9 @@ class checkQuizDto {
     optionSelected: string;
 }
 
-export class checkQuizzesDto {
+export class CheckQuizzesDto {
     @ArrayNotEmpty({ message: 'validation.NOT_EMPTY' })
     @ValidateNested({ each: true, message: 'validation.NOT_TYPE' })
-    @Type(() => checkQuizDto)
-    quizzes: checkQuizDto[];
+    @Type(() => checkQuiz)
+    quizzes: checkQuiz[];
 }
