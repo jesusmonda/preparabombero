@@ -9,7 +9,6 @@ export class InfoController {
   constructor(private readonly infoService: InfoService) {}
 
   @Get('')
-  @UseGuards(UserGuard)
   async findAll() {
     let response: InfoOmitId = await this.infoService.getAll();
     if (response == null) {
