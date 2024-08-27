@@ -8,7 +8,7 @@ import { PrismaService } from 'src/common/services/database.service';
   imports: [
     JwtModule.register({
       global: true,
-      secret: "eeeeeeeeee",
+      secret: "Mak7x6A0PXB3ssS7UANV",
       signOptions: { expiresIn: '10d' },
     })
   ],

@@ -25,6 +25,21 @@ export class TopicController {
     return this.transformTopics(topics, quizzesCount)
   }
 
+  @Get(':id')
+  @UseGuards(AdminGuard)
+  async findOne(@Param('id') topicId: string) {
+    if (!topicId || topicId == '') {
+      throw new BadRequestException();
+    }
+    const topicIdNumber: number = Number(topicId)
+    if (isNaN(topicIdNumber)) {
+      throw new BadRequestException();
+    }
+
+    let topic: Topic = await this.topicService.findTopic(topicIdNumber)
+    return topic;
+  }
+
   transformTopics = (topics: Topic[], quizzesCount: QuizCount[]): TopicsResponse => {
     // Función auxiliar para obtener el conteo de quizzes para un topic
     const getQuizCount = (topicId: number): number => {
@@ -47,7 +62,7 @@ export class TopicController {
       const directQuizCount = getQuizCount(topic.id);
       const topics = topic.topics
         .map(transformTopic)
-        .sort((a, b) => a.order - b.order);
+        .sort((a, b) => a.created_at - b.created_at);
       
       const totalQuizCount = directQuizCount + topics.reduce((sum, sub) => sum + sub.quizCount, 0);
   
@@ -55,9 +70,10 @@ export class TopicController {
         id: topic.id,
         title: topic.title,
         categoryTitle: topic.categoryTitle || null,
+        parentId: topic.parentId,
         expanded: !!topic.categoryTitle,
         quizCount: totalQuizCount,
-        order: topic.order,
+        created_at: topic.created_at,
         topics
       };
     };
@@ -66,7 +82,7 @@ export class TopicController {
     const transformedTopics = Array.from(topicMap.values())
       .filter(topic => topic.parentId === null)
       .map(transformTopic)
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => a.created_at - b.created_at);
   
     // Agrupar por categoryTitle
     const groupedTopics = transformedTopics.reduce((acc, topic) => {
@@ -81,7 +97,7 @@ export class TopicController {
   
     // Ordenar los topics dentro de cada categoría
     Object.keys(groupedTopics).forEach(category => {
-      groupedTopics[category].sort((a, b) => a.order - b.order);
+      groupedTopics[category].sort((a, b) => a.created_at - b.created_at);
     });
   
     return groupedTopics;
@@ -131,3 +147,7 @@ export class TopicController {
     return await this.topicService.delete(idNumber);
   }
 }
+function Query(arg0: string): (target: TopicController, propertyKey: "findOne", parameterIndex: 0) => void {
+  throw new Error('Function not implemented.');
+}
+

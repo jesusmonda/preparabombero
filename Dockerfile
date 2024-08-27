@@ -7,12 +7,13 @@ WORKDIR /app
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 COPY package*.json ./
 
+COPY . .
+
 # Install app dependencies
 RUN npm ci
 RUN npm install -g @nestjs/cli
 
 # Bundle app source
-COPY . .
 
 # Creates a "dist" folder with the production build
 RUN npx prisma generate

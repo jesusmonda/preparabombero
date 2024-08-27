@@ -23,7 +23,7 @@ export class UserGuard implements CanActivate {
       const decoded = await this.jwtService.verifyAsync(
         token,
         {
-          secret: "eeeeeeeeee" //TODO
+          secret: "Mak7x6A0PXB3ssS7UANV"
         }
       );
 

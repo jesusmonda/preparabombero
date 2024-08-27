@@ -18,10 +18,6 @@ export class CreateTopicDto {
     parentId: number;
 
     @IsNotEmpty({message: 'validation.NOT_EMPTY'})
-    @IsNumber({}, {message: 'validation.NOT_NUMBER'})
-    order: number;
-
-    @IsNotEmpty({message: 'validation.NOT_EMPTY'})
     @IsEnum(TopicType, {message: 'validation.NOT_ENUM'})
     type: string;
 }

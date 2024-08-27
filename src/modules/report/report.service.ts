@@ -38,7 +38,8 @@ export class ReportService {
         option3: true,
         option4: true,
         result: false,
-        topicId: true
+        topicId: true,
+        justification: true
       },
       where: {
         id: {

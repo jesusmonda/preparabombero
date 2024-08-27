@@ -28,4 +28,8 @@ export class QuizDto {
     @IsNotEmpty({ message: 'validation.NOT_EMPTY' })
     @IsNumber({}, {message: 'validation.NOT_NUMBER'})
     topicId: number;
+
+    @IsNotEmpty({ message: 'validation.NOT_EMPTY' })
+    @IsString({message: 'validation.NOT_STRING'})
+    justification: string;
 }

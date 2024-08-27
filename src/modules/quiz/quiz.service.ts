@@ -20,7 +20,8 @@ export class QuizService {
         option3: true,
         option4: true,
         result: false,
-        topicId: true
+        topicId: true,
+        justification: true
       },
       where: {
         topicId: {
