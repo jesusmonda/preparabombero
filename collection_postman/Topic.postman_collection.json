@@ -1,0 +1,211 @@
+{
+	"info": {
+		"_postman_id": "a03663d5-2c4c-4899-8e0a-edf3661b9807",
+		"name": "Topic",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25049528"
+	},
+	"item": [
+		{
+			"name": "topic all",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/topic",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"topic"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "topic by id",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/topic/1",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"topic",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create primary topic",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"1\",\n    \"categoryTitle\": \"Especialidad\",\n    \"order\": 0,\n    \"type\": \"PRIMARY\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/topic",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"topic"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create secondary topic",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"8\",\n    \"parentId\": 1,\n    \"type\": \"SECONDARY\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/topic",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"topic"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/topic/25",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"topic",
+						"25"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update secondary",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"2\",\n    \"order\": 0,\n    \"parentId\": 1,\n    \"type\": \"SECONDARY\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/topic/2",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"topic",
+						"2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update primary",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"11\",\n    \"order\": 0,\n    \"type\": \"PRIMARY\",\n    \"categoryTitle\": \"Especialidad\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/topic/1",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"topic",
+						"1"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
