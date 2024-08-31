@@ -20,12 +20,12 @@ export class QuizController {
     if (!(user.subscribed == true && user.subscription_id != null)) {
       throw new BadRequestException();
     }
+    if (generateQuizDto.topicIds.length <= 0) {
+      throw new BadRequestException();
+    }
 
     let topicIds: number[] = generateQuizDto.topicIds;
     let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, topicIds);
-
-    // TODO
-    // Chequear si está subscrito
 
     return response;
   }
