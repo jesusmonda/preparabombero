@@ -12,7 +12,7 @@ export class UserController {
   async createSubscriptionLink(@Headers('Host') host: string, @Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
 
-    if (user.id == 1){
+    if (user.id == 1 || user.id == 2){
       throw new BadRequestException();
     }
     if (!(user.subscribed == false && user.subscription_id == null && user.cancellation_pending == false)){
@@ -27,7 +27,7 @@ export class UserController {
   async deleteSubscription(@Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
 
-    if (user.id == 1){
+    if (user.id == 1 || user.id == 2){
       throw new BadRequestException();
     }
     if (!(user.subscribed == true && user.subscription_id != null && user.cancellation_pending == false)){
