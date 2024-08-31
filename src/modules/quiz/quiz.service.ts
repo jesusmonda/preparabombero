@@ -10,7 +10,9 @@ export class QuizService {
     private prisma: PrismaService
   ) {}
 
-  async getQuizzesFromTopicIds(topicIds: number[]) : Promise<QuizOmitResult[]>{
+  async getQuizzesFromTopicIds(userId: number, topicIds: number[]) : Promise<QuizOmitResult[]>{
+    topicIds = (userId == 1) ? [1] : topicIds;
+
     let quizs: QuizOmitResult[] = await this.prisma.quiz.findMany({
       select: {
         id: true,
@@ -30,7 +32,7 @@ export class QuizService {
       }
     });
     quizs = quizs.sort(function(){ return 0.5 - Math.random() });
-    return quizs.slice(0, 100)
+    return (userId == 1) ? quizs.slice(0, 20) : quizs.slice(0, 100)
   }
 
   async findQuiz(quizId: number) : Promise<Quiz>{

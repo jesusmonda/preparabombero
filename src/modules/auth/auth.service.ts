@@ -22,7 +22,7 @@ export class AuthService {
     let response: User = await this.prisma.user.create({
       data: registerAuthDto
     })
-    delete response?.password;
+    delete response.password;
     return response;
   }
 }

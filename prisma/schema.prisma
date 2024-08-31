@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://admin:admin@localhost:5432/preparabombero?schema=public"
+  url      = env("DATABASE_URL")
 }
 
 enum UserRole {
@@ -19,8 +19,10 @@ model User {
   surname    String
   password   String   @unique
   role       UserRole @default(USER)
-  subscribed Boolean  @default(false)
   ips        Ip[]
+  subscribed Boolean @default(false)
+  subscription_id String?
+  cancellation_pending Boolean @default(false)
 }
 
 model Ip {

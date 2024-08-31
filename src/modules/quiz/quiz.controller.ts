@@ -1,24 +1,28 @@
-import { Controller, BadRequestException, Put, Query, Get, Delete, HttpException, HttpStatus, Param, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Request, BadRequestException, Put, Query, Get, Delete, HttpException, HttpStatus, Param, Post, Body, UseGuards } from '@nestjs/common';
 import { QuizService } from './quiz.service';
 import { GenerateQuizDto } from './dto/generate-quiz.dto'
 import { CheckQuizzesDto } from './dto/check-quizzes.dto'
 import { QuizOmitResult, QuizAndStatus } from 'src/common/interfaces/quiz.interface';
-import { Quiz } from '@prisma/client';
+import { Quiz, User } from '@prisma/client';
 import { UserGuard } from 'src/common/guards/user.guard';
 import { QuizDto } from './dto/quiz.dto'
 import { AdminGuard } from 'src/common/guards/admin.guard';
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
+import { UserService } from '../user/user.service';
 
 @Controller('quiz')
 export class QuizController {
-  constructor(private readonly quizService: QuizService) {}
+  constructor(private readonly quizService: QuizService, private readonly userService: UserService) {}
 
   @Post('generate')
   @UseGuards(UserGuard)
-  async generateQuiz(@Body() generateQuizDto: GenerateQuizDto) {
+  async generateQuiz(@Body() generateQuizDto: GenerateQuizDto, @Request() request: Request) {
+    const user: User = await this.userService.getUser(request['user'].userId);
+    if (!(user.subscribed == true && user.subscription_id != null)) {
+      throw new BadRequestException();
+    }
+
     let topicIds: number[] = generateQuizDto.topicIds;
-    let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(topicIds);
+    let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, topicIds);
 
     // TODO
     // Chequear si está subscrito
@@ -28,9 +32,15 @@ export class QuizController {
 
   @Post('check')
   @UseGuards(UserGuard)
-  async checkQuiz(@Body() checkQuizzesDto: CheckQuizzesDto) {
+  async checkQuiz(@Body() checkQuizzesDto: CheckQuizzesDto, @Request() request: Request) {
+    const user: User = await this.userService.getUser(request['user'].userId);
+    if (!(user.subscribed == true && user.subscription_id != null)) {
+      throw new BadRequestException();
+    }
+
     let fail: number = 0;
     let success: number = 0;
+    let not_answered: number = 0;
     let response: QuizAndStatus[] = [];
 
     const promises = checkQuizzesDto.quizzes.map(async x => {
@@ -39,15 +49,19 @@ export class QuizController {
       if (quiz.result == x.optionSelected) {
         success++;
         status = "success"
-      }else{
+      }else if (x.optionSelected == null) {
+        not_answered++;
+        status = "not_answered"
+      } else{
         fail++;
         status = "fail"
       };
       response.push({... quiz, status})
+      return response;
     });
     await Promise.all(promises);
 
-    return {success, fail, quizzes: response}
+    return {success, fail, not_answered, quizzes: response}
   }
 
   @Get('')

@@ -16,6 +16,9 @@ import { join } from 'path';
 import { InfoModule } from './modules/info/info.module';
 import { ReportModule } from './modules/report/report.module';
 import { AdminGuard } from './common/guards/admin.guard';
+import { UserModule } from './modules/user/user.module';
+import { WebhookModule } from './modules/webhook/webhook.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -38,6 +41,11 @@ import { AdminGuard } from './common/guards/admin.guard';
       throwOnMissingKey: true
     }),
     ReportModule,
+    UserModule,
+    WebhookModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    })
   ],
   controllers: [AppController],
   providers: [

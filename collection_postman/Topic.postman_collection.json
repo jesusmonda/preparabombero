@@ -118,7 +118,7 @@
 			"response": []
 		},
 		{
-			"name": "delete",
+			"name": "delete topic",
 			"request": {
 				"method": "DELETE",
 				"header": [

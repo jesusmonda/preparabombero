@@ -1,0 +1,91 @@
+{
+	"info": {
+		"_postman_id": "2f34567b-cb6f-4c1f-9ddc-2708e3a28a54",
+		"name": "User",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25049528"
+	},
+	"item": [
+		{
+			"name": "create subscription link",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Host",
+						"value": "preparabombero.es",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/user/subscription",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"user",
+						"subscription"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cancel subscription",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Host",
+						"value": "preparabombero.es",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/user/subscription",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"user",
+						"subscription"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get user",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/user",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"user"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

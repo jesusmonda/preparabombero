@@ -23,7 +23,7 @@ export class AdminGuard implements CanActivate {
       const decoded = await this.jwtService.verifyAsync(
         token,
         {
-          secret: "Mak7x6A0PXB3ssS7UANV"
+          secret: process.env.JWT_SECRET
         }
       );
 
