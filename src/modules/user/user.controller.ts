@@ -15,7 +15,7 @@ export class UserController {
     if (user.id == 1 || user.id == 2){
       throw new BadRequestException();
     }
-    if (!(user.subscribed == false && user.subscription_id == null && user.cancellation_pending == false)){
+    if (!(user.subscribed == false && user.subscription_id == null && user.cancellation_pending == false) || user.role == 'ADMIN'){
       throw new BadRequestException();
     }
     
@@ -30,7 +30,7 @@ export class UserController {
     if (user.id == 1 || user.id == 2){
       throw new BadRequestException();
     }
-    if (!(user.subscribed == true && user.subscription_id != null && user.cancellation_pending == false)){
+    if (!(user.subscribed == true && user.subscription_id != null && user.cancellation_pending == false) || user.role == 'ADMIN'){
       throw new BadRequestException();
     }
     

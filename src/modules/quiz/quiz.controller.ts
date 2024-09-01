@@ -17,7 +17,7 @@ export class QuizController {
   @UseGuards(UserGuard)
   async generateQuiz(@Body() generateQuizDto: GenerateQuizDto, @Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
-    if (!(user.subscribed == true && user.subscription_id != null)) {
+    if (!(user.subscribed == true && user.subscription_id != null) && !(user.role == "ADMIN")) {
       throw new BadRequestException();
     }
     if (generateQuizDto.topicIds.length <= 0) {
@@ -34,7 +34,7 @@ export class QuizController {
   @UseGuards(UserGuard)
   async checkQuiz(@Body() checkQuizzesDto: CheckQuizzesDto, @Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
-    if (!(user.subscribed == true && user.subscription_id != null)) {
+    if (!(user.subscribed == true && user.subscription_id != null) && !(user.role == "ADMIN")) {
       throw new BadRequestException();
     }
 
@@ -66,7 +66,7 @@ export class QuizController {
 
   @Get('')
   @UseGuards(AdminGuard)
-  async getByTopicId(@Query('topicId') topicId: string) {
+  async getByTopicId(@Query('topicId') topicId: string, @Request() request: Request) {
     if (!topicId || topicId == '') {
       throw new BadRequestException();
     }
@@ -74,8 +74,9 @@ export class QuizController {
     if (isNaN(topicIdNumber)) {
       throw new BadRequestException();
     }
+    const user: User = await this.userService.getUser(request['user'].userId);
 
-    let quiz: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds([topicIdNumber])
+    let quiz: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, [topicIdNumber])
     return quiz;
   }
   

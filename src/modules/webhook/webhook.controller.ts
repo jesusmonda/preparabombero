@@ -17,11 +17,16 @@ export class WebhookController {
     if (user.id == 1 || user.id == 2){
       throw new BadRequestException();
     }
-    if (!(user.subscribed == true && user.subscription_id != null)) { // Puede ser cancelado por fraude, no por solicitud del usuario.
+    if (!(user.subscribed == true && user.subscription_id != null) || user.role == 'ADMIN') { // Puede ser cancelado por fraude, no por solicitud del usuario.
       throw new BadRequestException();
     }
 
-    return this.webhookService.updateSubscription(user.id, "DELETED", body.data.object.id);
+    try {
+    	return this.webhookService.updateSubscription(user.id, "CANCELED", body.data.object.id);
+    } catch (error) {
+        console.log(error);
+        throw new InternalServerErrorException();
+    }
   }
   
   @Post('subscription/created')
@@ -34,10 +39,15 @@ export class WebhookController {
     if (user.id == 1 || user.id == 2){
       throw new BadRequestException();
     }
-    if (!(user.subscribed == false && user.subscription_id == null && user.cancellation_pending == false)) {
+    if (!(user.subscribed == false && user.subscription_id == null && user.cancellation_pending == false) || user.role == 'ADMIN') {
       throw new BadRequestException();
     }
 
-    return this.webhookService.updateSubscription(user.id, "CREATED", body.data.object.id);
+    try {
+    	return this.webhookService.updateSubscription(user.id, "CREATED", body.data.object.id);
+    } catch (error) {
+        console.log(error);
+        throw new InternalServerErrorException();
+    }
   }
 }

@@ -23,7 +23,7 @@ export class AuthController {
     }
 
     const access_token = await this.jwtService.signAsync({userId: user.id, role: user.role});
-    return {access_token, role: user.role}
+    return {access_token}
   }
 
   @Post('register')

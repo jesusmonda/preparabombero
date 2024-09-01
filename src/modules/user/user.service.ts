@@ -26,7 +26,7 @@ export class UserService {
       after_completion: {
         type: "redirect",
         redirect: {
-          url: process.env.ENVIRONMENT == "prod" ? `https://${host}/payment` : "http://localhost/payment"
+          url: process.env.ENVIRONMENT == "prod" ? `https://${host}` : "http://localhost"
         }
       },
       allow_promotion_codes: false,
