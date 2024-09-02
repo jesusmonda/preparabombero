@@ -18,7 +18,6 @@ export class WebhookService {
     userId = Number(userId);
 
     if (action == "CANCELED") {
-      this.stripe.subscriptions.cancel(subscription_id);
       return this.prisma.user.update({
         select: {
           id: true,

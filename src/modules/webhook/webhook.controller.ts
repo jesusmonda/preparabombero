@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, BadRequestException } from '@nestjs/common';
 import { WebhookService } from './webhook.service';
 import { UserService } from '../user/user.service';
 import { User } from '@prisma/client';
@@ -21,12 +21,7 @@ export class WebhookController {
       throw new BadRequestException();
     }
 
-    try {
     	return this.webhookService.updateSubscription(user.id, "CANCELED", body.data.object.id);
-    } catch (error) {
-        console.log(error);
-        throw new InternalServerErrorException();
-    }
   }
   
   @Post('subscription/created')
@@ -43,11 +38,6 @@ export class WebhookController {
       throw new BadRequestException();
     }
 
-    try {
     	return this.webhookService.updateSubscription(user.id, "CREATED", body.data.object.id);
-    } catch (error) {
-        console.log(error);
-        throw new InternalServerErrorException();
-    }
   }
 }
