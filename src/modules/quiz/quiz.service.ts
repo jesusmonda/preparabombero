@@ -10,10 +10,10 @@ export class QuizService {
     private prisma: PrismaService
   ) {}
 
-  async getQuizzesFromTopicIds(userId: number, topicIds: number[]) : Promise<QuizOmitResult[]>{
+  async getQuizzesFromTopicIds(userId: number, topicIds: number[], order: "DESC" | "RANDOM") : Promise<QuizOmitResult[]>{
     topicIds = (userId == 1) ? [1] : topicIds;
 
-    let quizs: QuizOmitResult[] = await this.prisma.quiz.findMany({
+    const query: any = {
       select: {
         id: true,
         title: true,
@@ -23,15 +23,25 @@ export class QuizService {
         option4: true,
         result: false,
         topicId: true,
-        justification: true
+        justification: true,
+        created_at: true
       },
       where: {
         topicId: {
           in: topicIds.map(topicId => Number(topicId))
         }
       }
-    });
-    quizs = quizs.sort(function(){ return 0.5 - Math.random() });
+    }
+    if (order === "DESC") {
+      query.orderBy = [
+        {
+          created_at: 'desc',
+        },
+      ]
+    }
+  
+    let quizs: QuizOmitResult[] = await this.prisma.quiz.findMany(query);
+    if (order === "RANDOM") quizs = quizs.sort(function(){ return 0.5 - Math.random() });
     return (userId == 1) ? quizs.slice(0, 20) : quizs.slice(0, 100)
   }
 
@@ -39,6 +49,15 @@ export class QuizService {
     let reponse: Quiz = await this.prisma.quiz.findUnique({
       where: {
         id: Number(quizId)
+      }
+    });
+    return reponse
+  }
+
+  async findQuizByTitle(title: string) : Promise<Quiz>{
+    let reponse: Quiz = await this.prisma.quiz.findUnique({
+      where: {
+        title: title
       }
     });
     return reponse

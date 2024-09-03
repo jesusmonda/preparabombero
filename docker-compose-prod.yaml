@@ -1,0 +1,24 @@
+services:
+  app_prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:3000
+    env_file: .env
+    depends_on:
+      database_prod:
+        condition: service_started
+  database_prod:
+    image: postgres:14-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - database_prod:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=rEDT8s57ynH6
+      - POSTGRES_USER=Cyb14BXD519W
+      - POSTGRES_DB=preparabombero
+
+volumes:
+  database_prod:

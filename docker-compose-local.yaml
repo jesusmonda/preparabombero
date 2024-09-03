@@ -1,0 +1,43 @@
+services:
+  stripe_local:
+    image: stripe/stripe-cli:latest
+    entrypoint: /bin/sh
+    command: -c "stripe listen --api-key ${STRIPE_API_KEY} --forward-to localhost:3000/webhook/subscription_created --forward-to localhost:3000/webhook/subscription_canceled"
+    env_file: .env
+    depends_on:
+      app_local:
+        condition: service_started
+  app_local:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    env_file: .env
+    command: >
+      sh -c "
+        npx prisma migrate deploy
+        npx prisma db seed
+        npm run start:debug
+      "
+    volumes:
+      - '.:/app'
+      - /app/node_modules/
+      - /app/dist/
+    depends_on:
+      database_local:
+        condition: service_started
+  database_local:
+    image: postgres:14-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - database_local:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_USER=admin
+      - POSTGRES_DB=preparabombero
+
+volumes:
+  database_local:
+  stripe_local:

@@ -1,4 +1,4 @@
-import { Controller, Request, BadRequestException, Put, Query, Get, Delete, HttpException, HttpStatus, Param, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Request, BadRequestException, Put, Query, Get, Delete, HttpException, HttpStatus, Param, Post, Body, UseGuards, InternalServerErrorException } from '@nestjs/common';
 import { QuizService } from './quiz.service';
 import { GenerateQuizDto } from './dto/generate-quiz.dto'
 import { CheckQuizzesDto } from './dto/check-quizzes.dto'
@@ -25,7 +25,7 @@ export class QuizController {
     }
 
     let topicIds: number[] = generateQuizDto.topicIds;
-    let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, topicIds);
+    let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, topicIds, "RANDOM");
 
     return response;
   }
@@ -76,13 +76,18 @@ export class QuizController {
     }
     const user: User = await this.userService.getUser(request['user'].userId);
 
-    let quiz: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, [topicIdNumber])
+    let quiz: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, [topicIdNumber], "DESC")
     return quiz;
   }
   
   @Post('')
   @UseGuards(AdminGuard)
   async create(@Body() quizDto: QuizDto) {
+    const quiz = await this.quizService.findQuizByTitle(quizDto.title);
+    if (quiz != null) {
+      throw new BadRequestException();
+    }
+
     return await this.quizService.create(quizDto);
   }
 

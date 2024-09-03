@@ -39,7 +39,8 @@ export class ReportService {
         option4: true,
         result: false,
         topicId: true,
-        justification: true
+        justification: true,
+        created_at: true
       },
       where: {
         id: {

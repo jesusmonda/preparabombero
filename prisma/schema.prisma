@@ -55,6 +55,7 @@ model Quiz {
   topicId Int
   justification String
   reports Report[]
+  created_at    DateTime @default(now())
 }
 
 model Report {
