@@ -2,7 +2,7 @@ services:
   stripe_local:
     image: stripe/stripe-cli:latest
     entrypoint: /bin/sh
-    command: -c "stripe listen --api-key ${STRIPE_API_KEY} --forward-to localhost:3000/webhook/subscription_created --forward-to localhost:3000/webhook/subscription_canceled"
+    command: -c "stripe listen --api-key ${STRIPE_API_KEY} --forward-to app_local:3000/webhook/subscription/created --forward-to app_local:3000/webhook/subscription/canceled"
     env_file: .env
     depends_on:
       app_local:
