@@ -3,18 +3,18 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  const alice = await prisma.user.upsert({
+  const demo = await prisma.user.upsert({
     where: { email: 'demo@preparabombero.com' },
     update: {},
     create: {
       email: 'demo@preparabombero.com',
       name: 'Demo',
       surname: 'Demo',
-      password: 'demo',
+      password: process.env.DEMO_PASSSWORD,
       role: 'USER'
     },
   })
-  const bob = await prisma.user.upsert({
+  const admin = await prisma.user.upsert({
     where: { email: 'admin@preparabombero.com' },
     update: {},
     create: {
@@ -25,7 +25,7 @@ async function main() {
       role: 'ADMIN'
     },
   })
-  console.log({ alice, bob })
+  console.log({ demo, admin })
 }
 main()
   .then(async () => {

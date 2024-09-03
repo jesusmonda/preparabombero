@@ -30,7 +30,7 @@ import { ConfigModule } from '@nestjs/config';
     I18nModule.forRoot({
       fallbackLanguage: 'es',
       loaderOptions: {
-        path: join(__dirname, '/i18n/'),
+        path: join(__dirname, '/../i18n/'),
         watch: true,
       },
       resolvers: [
