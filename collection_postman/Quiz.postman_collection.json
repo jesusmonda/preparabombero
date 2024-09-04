@@ -52,7 +52,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"quizzes\": [\n        {\n            \"quizId\": 4,\n            \"optionSelected\": \"ee\"\n        }\n    ]\n}",
+					"raw": "{\n    \"quizzes\": [\n        {\n            \"quizId\": 1,\n            \"optionSelected\": \"ee\"\n        }\n    ],\n    \"type\": \"EXAM\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -118,7 +118,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"title\":\"ee\",\n    \"option1\":\"aa\",\n    \"option2\":\"bb\",\n    \"option3\":\"cc\",\n    \"option4\":\"dd\",\n    \"result\":\"rr\",\n    \"topicId\": 1,\n    \"justification\": \"porque si\"\n}",
+					"raw": "{\n    \"title\":\"aa\",\n    \"option1\":\"aa\",\n    \"option2\":\"bb\",\n    \"option3\":\"cc\",\n    \"option4\":\"dd\",\n    \"result\":\"rr\",\n    \"topicId\": 1,\n    \"justification\": \"porque si\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -173,7 +173,7 @@
 					}
 				],
 				"url": {
-					"raw": "{{url}}/quiz?topicId=1",
+					"raw": "{{url}}/quiz?topicId=2",
 					"host": [
 						"{{url}}"
 					],
@@ -183,7 +183,7 @@
 					"query": [
 						{
 							"key": "topicId",
-							"value": "1"
+							"value": "2"
 						}
 					]
 				}
