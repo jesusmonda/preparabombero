@@ -61,6 +61,10 @@ export class QuizController {
     });
     await Promise.all(promises);
 
+    if (checkQuizzesDto.type == "EXAM") {
+      await this.quizService.createStats(user.id, success, fail, not_answered);
+    }
+
     return {success, fail, not_answered, quizzes: response}
   }
 

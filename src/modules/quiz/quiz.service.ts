@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/common/services/database.service';
-import { Quiz } from '@prisma/client';
+import { Quiz, QuizStat } from '@prisma/client';
 import { QuizOmitResult } from 'src/common/interfaces/quiz.interface';
 import { QuizDto } from 'src/modules/quiz/dto/quiz.dto';
 
@@ -86,5 +86,22 @@ export class QuizService {
       }
     });
     return reponse
+  }
+
+  async createStats(userId: number, success: number, fail: number, not_answered: number) : Promise<QuizStat> {
+    userId = Number(userId)
+    success = Number(success)
+    fail = Number(fail)
+    not_answered = Number(not_answered)
+
+    let response: QuizStat = await this.prisma.quizStat.create({
+      data: {
+        userId,
+        success,
+        fail,
+        not_answered
+      }
+    });
+    return response
   }
 }

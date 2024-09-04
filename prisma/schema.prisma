@@ -17,12 +17,13 @@ model User {
   email      String   @unique
   name       String
   surname    String
-  password   String   @unique
+  password   String
   role       UserRole @default(USER)
   ips        Ip[]
   subscribed Boolean @default(false)
   subscription_id String?
   cancellation_pending Boolean @default(false)
+  quizStats       QuizStat[]
 }
 
 model Ip {
@@ -55,6 +56,16 @@ model Quiz {
   topicId Int
   justification String
   reports Report[]
+  created_at    DateTime @default(now())
+}
+
+model QuizStat {
+  id      Int    @id @default(autoincrement())
+  user   User  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId Int
+  success Int
+  fail Int
+  not_answered Int
   created_at    DateTime @default(now())
 }
 

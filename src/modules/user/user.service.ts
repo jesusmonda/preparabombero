@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { User, QuizStat } from '@prisma/client';
 import { UserNotSensitive } from 'src/common/interfaces/user.interface';
 import { PrismaService } from 'src/common/services/database.service';
 import Stripe from 'stripe';
@@ -76,6 +76,23 @@ export class UserService {
       data: {
         cancellation_pending: true
       }
+    });
+  }
+
+  async getQuizStats(userId: number): Promise<QuizStat[]> {
+    userId = Number(userId);
+
+    return await this.prisma.quizStat.findMany({
+      skip: 0,
+      take: 6,
+      where: {
+        userId: userId
+      },
+      orderBy: [
+        {
+          created_at: 'desc',
+        },
+      ]
     });
   }
 }

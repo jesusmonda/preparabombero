@@ -46,4 +46,12 @@ export class UserController {
     delete user.subscription_id;
     return user;
   }
+
+  @Get('stats')
+  @UseGuards(UserGuard)
+  async getStats(@Request() request: Request) {
+    const user: User = await this.userService.getUser(request['user'].userId);
+    const QuizStats = await this.userService.getQuizStats(user.id);
+    return QuizStats;
+  }
 }
