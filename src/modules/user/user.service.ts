@@ -26,7 +26,7 @@ export class UserService {
       after_completion: {
         type: "redirect",
         redirect: {
-          url: process.env.ENVIRONMENT == "prod" ? `https://${host}` : "http://localhost"
+          url: process.env.ENVIRONMENT == "prod" ? `https://${host}/profile` : "http://localhost:4200/profile"
         }
       },
       allow_promotion_codes: false,

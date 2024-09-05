@@ -7,7 +7,19 @@ import { User } from '@prisma/client';
 export class WebhookController {
   constructor(private userService: UserService, private readonly webhookService: WebhookService) {}
 
-  @Post('subscription/canceled')
+  @Post('')
+  async webhook(@Body() body: any) {
+    if (body.type == "customer.subscription.deleted") {
+      return await this.subscriptionDeleted(body);
+    }
+
+    if (body.type == "customer.subscription.created") {
+      return await this.subscriptionCreate(body);
+    }
+
+    throw new HttpException('Evento incorrecto', HttpStatus.BAD_REQUEST);
+  }
+
   async subscriptionDeleted(@Body() body: any) {
     if (body.type != "customer.subscription.deleted") {
       throw new HttpException('Evento incorrecto', HttpStatus.BAD_REQUEST);
@@ -24,7 +36,6 @@ export class WebhookController {
     	return this.webhookService.updateSubscription(user.id, "CANCELED", body.data.object.id);
   }
   
-  @Post('subscription/created')
   async subscriptionCreate(@Body() body: any) {
     if (body.type != "customer.subscription.created") {
       throw new HttpException('Evento incorrecto', HttpStatus.BAD_REQUEST);
