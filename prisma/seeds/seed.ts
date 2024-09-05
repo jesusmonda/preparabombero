@@ -13,7 +13,9 @@ async function main() {
       name: 'Demo',
       surname: 'Demo',
       password: '$2a$10$CQh29OfW25Yg34TIFf2.4ODvVody8RUp3drm7bHFqc1Kms0u7flBG',
-      role: 'USER'
+      role: 'USER',
+      subscribed: true,
+      subscription_id: 'xx'
     },
   })
   console.log(process.env.ADMIN_PASSSWORD)
@@ -27,7 +29,9 @@ async function main() {
       name: 'Admin',
       surname: 'Admin',
       password: `$2a$10$uVgbmPWCA9CCLIZFPVUmnemyprezy491lu3zovByJZuOti0Ng35QK`,
-      role: 'ADMIN'
+      role: 'ADMIN',
+      subscribed: true,
+      subscription_id: 'xx'
     },
   })
   console.log({ demo, admin })

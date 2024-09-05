@@ -29,11 +29,11 @@ export class TopicController {
   @UseGuards(AdminGuard)
   async findOne(@Param('id') topicId: string) {
     if (!topicId || topicId == '') {
-      throw new BadRequestException();
+      throw new HttpException('TopicId invalido', HttpStatus.BAD_REQUEST);
     }
     const topicIdNumber: number = Number(topicId)
     if (isNaN(topicIdNumber)) {
-      throw new BadRequestException();
+      throw new HttpException('TopicId invalido', HttpStatus.BAD_REQUEST);
     }
 
     let topic: Topic = await this.topicService.findTopic(topicIdNumber)
@@ -113,16 +113,16 @@ export class TopicController {
   @UseGuards(AdminGuard)
   async update(@Param('id') id: string, @Body() createTopicDto: CreateTopicDto) {
     if (!id || id == '') {
-      throw new BadRequestException();
+      throw new HttpException('Id invalido', HttpStatus.BAD_REQUEST);
     }
     const idNumber: number = Number(id)
     if (isNaN(idNumber)) {
-      throw new BadRequestException();
+      throw new HttpException('Id invalido', HttpStatus.BAD_REQUEST);
     }
 
     let quiz: Topic = await this.topicService.findTopic(idNumber);
     if (quiz == null) {
-      throw new HttpException('Not found topic', HttpStatus.NOT_FOUND);
+      throw new HttpException('Tema no encontrado', HttpStatus.NOT_FOUND);
     }
 
     return await this.topicService.update(idNumber, createTopicDto);
@@ -132,16 +132,16 @@ export class TopicController {
   @UseGuards(AdminGuard)
   async delete(@Param('id') id: string) {
     if (!id || id == '') {
-      throw new BadRequestException();
+      throw new HttpException('Id invalido', HttpStatus.BAD_REQUEST);
     }
     const idNumber: number = Number(id)
     if (isNaN(idNumber)) {
-      throw new BadRequestException();
+      throw new HttpException('Id invalido', HttpStatus.BAD_REQUEST);
     }
 
     let quiz: Topic = await this.topicService.findTopic(idNumber);
     if (quiz == null) {
-      throw new HttpException('Not found topic', HttpStatus.NOT_FOUND);
+      throw new HttpException('Tema no encontrado', HttpStatus.NOT_FOUND);
     }
 
     return await this.topicService.delete(idNumber);

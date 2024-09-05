@@ -14,12 +14,12 @@ export class AuthController {
   async login(@Body() loginAuthDto: LoginAuthDto) {
     const user: User = await this.authService.findOne(loginAuthDto.email);
     if (!user) {
-      throw new HttpException('Not found user', HttpStatus.NOT_FOUND);
+      throw new HttpException('Usuario no encontrado', HttpStatus.NOT_FOUND);
     }
   
     const isMatch: boolean = await bcrypt.compare(loginAuthDto.password, user.password);
     if (!isMatch) {
-      throw new HttpException('Incorrect password', HttpStatus.UNAUTHORIZED);
+      throw new HttpException('Contraseña incorrecta', HttpStatus.UNAUTHORIZED);
     }
 
     const access_token = await this.jwtService.signAsync({userId: user.id, role: user.role});
@@ -31,11 +31,11 @@ export class AuthController {
     
     const user: User = await this.authService.findOne(registerAuthDto.email);
     if (user) {
-      throw new HttpException('Found user', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Usuario no encontrado', HttpStatus.BAD_REQUEST);
     }
 
     if (registerAuthDto.password !== registerAuthDto.repeatPassword) {
-      throw new HttpException('Password not match', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Contraseña invalida', HttpStatus.BAD_REQUEST);
     }
 
     registerAuthDto.password = await bcrypt.hash(registerAuthDto.password, await bcrypt.genSalt());

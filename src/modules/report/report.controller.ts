@@ -32,16 +32,16 @@ export class ReportController {
   @UseGuards(AdminGuard)
   async delete(@Param('id') id: string) {
     if (!id || id == '') {
-      throw new BadRequestException();
+      throw new HttpException('Id incorrecto', HttpStatus.BAD_REQUEST);
     }
     const idNumber: number = Number(id)
     if (isNaN(idNumber)) {
-      throw new BadRequestException();
+      throw new HttpException('Id incorrecto', HttpStatus.BAD_REQUEST);
     }
 
     let report = await this.reportService.findId(idNumber);
     if (report == null) {
-      throw new HttpException('Not found report', HttpStatus.NOT_FOUND);
+      throw new HttpException('Reporte no encontrado', HttpStatus.NOT_FOUND);
     }
 
     return await this.reportService.delete(idNumber);

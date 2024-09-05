@@ -1,4 +1,4 @@
-import { Controller, Request, Headers, Get, Post, Body, Patch, Param, Delete, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Request, Headers, Get, Post, Body, Patch, Param, Delete, UseGuards, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from '@prisma/client';
 import { UserGuard } from 'src/common/guards/user.guard';
@@ -13,10 +13,10 @@ export class UserController {
     const user: User = await this.userService.getUser(request['user'].userId);
 
     if (user.id == 1 || user.id == 2){
-      throw new BadRequestException();
+      throw new HttpException('El usuario demo y admin no pueden subscribirse', HttpStatus.BAD_REQUEST);
     }
     if (!(user.subscribed == false && user.subscription_id == null && user.cancellation_pending == false) || user.role == 'ADMIN'){
-      throw new BadRequestException();
+      throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
     }
     
     return this.userService.createSubscriptionLink(host, user.id);
@@ -28,10 +28,10 @@ export class UserController {
     const user: User = await this.userService.getUser(request['user'].userId);
 
     if (user.id == 1 || user.id == 2){
-      throw new BadRequestException();
+      throw new HttpException('El usuario demo y admin no pueden desubscribirse', HttpStatus.BAD_REQUEST);
     }
     if (!(user.subscribed == true && user.subscription_id != null && user.cancellation_pending == false) || user.role == 'ADMIN'){
-      throw new BadRequestException();
+      throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
     }
     
     this.userService.deleteSubscription(user.subscription_id, user.id);

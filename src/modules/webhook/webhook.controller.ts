@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
 import { WebhookService } from './webhook.service';
 import { UserService } from '../user/user.service';
 import { User } from '@prisma/client';
@@ -10,15 +10,15 @@ export class WebhookController {
   @Post('subscription/canceled')
   async subscriptionDeleted(@Body() body: any) {
     if (body.type != "customer.subscription.deleted") {
-      throw new BadRequestException();
+      throw new HttpException('Evento incorrecto', HttpStatus.BAD_REQUEST);
     }
       
     const user: User = await this.userService.getUser(body.data.object.metadata.userId);
     if (user.id == 1 || user.id == 2){
-      throw new BadRequestException();
+      throw new HttpException('El usuario demo y admin no pueden desubscribirse', HttpStatus.BAD_REQUEST);
     }
     if (!(user.subscribed == true && user.subscription_id != null) || user.role == 'ADMIN') { // Puede ser cancelado por fraude, no por solicitud del usuario.
-      throw new BadRequestException();
+      throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
     }
 
     	return this.webhookService.updateSubscription(user.id, "CANCELED", body.data.object.id);
@@ -27,15 +27,15 @@ export class WebhookController {
   @Post('subscription/created')
   async subscriptionCreate(@Body() body: any) {
     if (body.type != "customer.subscription.created") {
-      throw new BadRequestException();
+      throw new HttpException('Evento incorrecto', HttpStatus.BAD_REQUEST);
     }
 
     const user: User = await this.userService.getUser(body.data.object.metadata.userId);
     if (user.id == 1 || user.id == 2){
-      throw new BadRequestException();
+      throw new HttpException('El usuario de demo y admin no pueden subscribirse', HttpStatus.BAD_REQUEST);
     }
     if (!(user.subscribed == false && user.subscription_id == null && user.cancellation_pending == false) || user.role == 'ADMIN') {
-      throw new BadRequestException();
+      throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
     }
 
     	return this.webhookService.updateSubscription(user.id, "CREATED", body.data.object.id);

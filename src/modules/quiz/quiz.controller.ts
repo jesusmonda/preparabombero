@@ -18,10 +18,10 @@ export class QuizController {
   async generateQuiz(@Body() generateQuizDto: GenerateQuizDto, @Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
     if (!(user.subscribed == true && user.subscription_id != null) && !(user.role == "ADMIN")) {
-      throw new BadRequestException();
+      throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
     }
     if (generateQuizDto.topicIds.length <= 0) {
-      throw new BadRequestException();
+      throw new HttpException('No se ha encontrado preguntas', HttpStatus.BAD_REQUEST);
     }
 
     let topicIds: number[] = generateQuizDto.topicIds;
@@ -35,7 +35,7 @@ export class QuizController {
   async checkQuiz(@Body() checkQuizzesDto: CheckQuizzesDto, @Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
     if (!(user.subscribed == true && user.subscription_id != null) && !(user.role == "ADMIN")) {
-      throw new BadRequestException();
+      throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
     }
 
     let fail: number = 0;
@@ -72,11 +72,11 @@ export class QuizController {
   @UseGuards(AdminGuard)
   async getByTopicId(@Query('topicId') topicId: string, @Request() request: Request) {
     if (!topicId || topicId == '') {
-      throw new BadRequestException();
+      throw new HttpException('TopicId incorrecto', HttpStatus.BAD_REQUEST);
     }
     const topicIdNumber: number = Number(topicId)
     if (isNaN(topicIdNumber)) {
-      throw new BadRequestException();
+      throw new HttpException('TopicId incorrecto', HttpStatus.BAD_REQUEST);
     }
     const user: User = await this.userService.getUser(request['user'].userId);
 
@@ -89,7 +89,7 @@ export class QuizController {
   async create(@Body() quizDto: QuizDto) {
     const quiz = await this.quizService.findQuizByTitle(quizDto.title);
     if (quiz != null) {
-      throw new BadRequestException();
+      throw new HttpException('Ya existe una pregunta con el mismo titulo', HttpStatus.BAD_REQUEST);
     }
 
     return await this.quizService.create(quizDto);
@@ -99,16 +99,16 @@ export class QuizController {
   @UseGuards(AdminGuard)
   async update(@Param('id') quizId: string, @Body() quizDto: QuizDto) {
     if (!quizId || quizId == '') {
-      throw new BadRequestException();
+      throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
     }
     const quizIdNumber: number = Number(quizId)
     if (isNaN(quizIdNumber)) {
-      throw new BadRequestException();
+      throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
     }
 
     let quiz: Quiz = await this.quizService.findQuiz(quizIdNumber);
     if (quiz == null) {
-      throw new HttpException('Not found quiz', HttpStatus.NOT_FOUND);
+      throw new HttpException('Pregunta no encontrada', HttpStatus.NOT_FOUND);
     }
 
     return await this.quizService.update(quizIdNumber, quizDto);
@@ -118,16 +118,16 @@ export class QuizController {
   @UseGuards(AdminGuard)
   async delete(@Param('id') quizId: string) {
     if (!quizId || quizId == '') {
-      throw new BadRequestException();
+      throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
     }
     const quizIdNumber: number = Number(quizId)
     if (isNaN(quizIdNumber)) {
-      throw new BadRequestException();
+      throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
     }
   
     let quiz: Quiz = await this.quizService.findQuiz(quizIdNumber);
     if (quiz == null) {
-      throw new HttpException('Not found quiz', HttpStatus.NOT_FOUND);
+      throw new HttpException('Pregunta no encontrada', HttpStatus.NOT_FOUND);
     }
 
     return await this.quizService.delete(quizIdNumber);
