@@ -17,7 +17,6 @@ export class QuizDto {
     @IsString({message: 'validation.NOT_STRING'})
     option3: string;
 
-    @IsNotEmpty({ message: 'validation.NOT_EMPTY' })
     @IsString({message: 'validation.NOT_STRING'})
     option4: string;
 
