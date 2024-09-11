@@ -52,9 +52,14 @@ model Quiz {
   option3 String
   option4 String
   result  String
-  topic   Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  topicId Int
-  justification String
+  /// TODO Eliminar ?
+  topic   Topic?  @relation(fields: [topicId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  /// TODO Eliminar ?
+  topicId Int? 
+  /// TODO Eliminar ?
+  justification String? 
+  /// TODO Eliminar campo
+  pdf_name String?
   reports Report[]
   created_at    DateTime @default(now())
 }
