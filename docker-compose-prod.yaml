@@ -14,11 +14,8 @@ services:
     ports:
       - 5433:5432
     volumes:
-      - database_prod:/var/lib/postgresql/data
+      - /opt/preparabombero/database:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=rEDT8s57ynH6
       - POSTGRES_USER=Cyb14BXD519W
       - POSTGRES_DB=preparabombero
-
-volumes:
-  database_prod:
