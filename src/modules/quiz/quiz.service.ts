@@ -54,15 +54,6 @@ export class QuizService {
     return reponse
   }
 
-  async findQuizByTitle(title: string) : Promise<Quiz>{
-    let reponse: Quiz = await this.prisma.quiz.findUnique({
-      where: {
-        title: title
-      }
-    });
-    return reponse
-  }
-
   async update(id: number, quizDto: QuizDto) : Promise<Quiz> {
     let reponse: Quiz = await this.prisma.quiz.update({
       where: {

@@ -87,11 +87,6 @@ export class QuizController {
   @Post('')
   @UseGuards(AdminGuard)
   async create(@Body() quizDto: QuizDto) {
-    const quiz = await this.quizService.findQuizByTitle(quizDto.title);
-    if (quiz != null) {
-      throw new HttpException('Ya existe una pregunta con el mismo titulo', HttpStatus.BAD_REQUEST);
-    }
-
     return await this.quizService.create(quizDto);
   }
 
