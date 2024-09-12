@@ -11,6 +11,7 @@ pg_dump -U Cyb14BXD519W -h localhost -p 5433 -d preparabombero -F c -f $BACKUP_F
 
 # Subir la copia de seguridad a S3
 aws s3 cp $BACKUP_FILE s3://108782067299-database-backups
+aws cloudwatch put-metric-data --namespace "Backup" --metric-name "BackupStatus" --value 1 --timestamp "$(date +%Y-%m-%dT%H:%M:%S)"
 
 # Configurar el script para ejecutarse cada 12 horas usando cron
 # (Ejecuta 'crontab -e' y añade la siguiente línea)
