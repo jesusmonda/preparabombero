@@ -35,7 +35,7 @@ model Ip {
 
 model Topic {
   id            Int     @id @default(autoincrement())
-  title         String  @unique
+  title         String 
   categoryTitle String?
   parent        Topic?  @relation("Topics", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   parentId      Int?
