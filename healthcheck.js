@@ -3,10 +3,10 @@ const { Client } = require('pg');
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns');
 
 // Configuración de AWS SNS
-const snsClient = new SNSClient(); // Cambia la región si es necesario
+const snsClient = new SNSClient({ region: 'eu-south-2' }); // Cambia la región si es necesario
 
 // URL del endpoint de salud
-const HEALTH_ENDPOINT = 'http://app_prod:3000/health'; // Cambia esto a tu URL real
+const HEALTH_ENDPOINT = 'http://localhost:3000/health'; // Cambia esto a tu URL real
 const SNS_TOPIC_ARN = 'arn:aws:sns:eu-south-2:108782067299:preparabombero_sns_monitoring'; // Cambia esto a tu ARN de SNS real
 
 // Configuración de la base de datos
