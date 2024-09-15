@@ -62,7 +62,7 @@ export class TopicController {
       const directQuizCount = getQuizCount(topic.id);
       const topics = topic.topics
         .map(transformTopic)
-        .sort((a, b) => a.created_at - b.created_at);
+        .sort((a, b) => a.id - b.id);
       
       const totalQuizCount = directQuizCount + topics.reduce((sum, sub) => sum + sub.quizCount, 0);
   
@@ -82,7 +82,7 @@ export class TopicController {
     const transformedTopics = Array.from(topicMap.values())
       .filter(topic => topic.parentId === null)
       .map(transformTopic)
-      .sort((a, b) => a.created_at - b.created_at);
+      .sort((a, b) => a.id - b.id);
   
     // Agrupar por categoryTitle
     const groupedTopics = transformedTopics.reduce((acc, topic) => {
@@ -97,7 +97,7 @@ export class TopicController {
   
     // Ordenar los topics dentro de cada categoría
     Object.keys(groupedTopics).forEach(category => {
-      groupedTopics[category].sort((a, b) => a.created_at - b.created_at);
+      groupedTopics[category].sort((a, b) => a.id - b.id);
     });
   
     return groupedTopics;
