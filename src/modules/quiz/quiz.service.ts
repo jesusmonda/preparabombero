@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/common/services/database.service';
-import { Quiz, QuizStat } from '@prisma/client';
+import { Quiz, QuizStat, Topic } from '@prisma/client';
 import { QuizOmitResult } from 'src/common/interfaces/quiz.interface';
 import { QuizDto } from 'src/modules/quiz/dto/quiz.dto';
 
@@ -10,8 +10,35 @@ export class QuizService {
     private prisma: PrismaService
   ) {}
 
+  async getAllChildren(parentIds: number[]): Promise<number[]> {
+    const children = await this.prisma.topic.findMany({
+        where: {
+            parentId: {
+                in: parentIds,
+            },
+        },
+        select: {
+            id: true, // Solo selecciona el ID
+        },
+    });
+
+    // Almacenar todos los IDs encontrados
+    const allChildrenIds = children.map(child => child.id);
+
+    // Obtener los IDs de los hijos encontrados para la próxima iteración
+    const childIds = children.map(child => child.id);
+
+    // Si hay nuevos hijos, llamar recursivamente
+    if (childIds.length > 0) {
+        const childDescendantIds = await this.getAllChildren(childIds);
+        allChildrenIds.push(...childDescendantIds);
+    }
+
+    return Array.from(new Set([...parentIds, ...allChildrenIds]));
+  }
+
   async getQuizzesFromTopicIds(userId: number, topicIds: number[], order: "DESC" | "RANDOM") : Promise<QuizOmitResult[]>{
-    topicIds = (userId == 1) ? [1] : topicIds;
+    topicIds = (userId == 1) ? [662] : topicIds;
 
     const query: any = {
       select: {
@@ -28,7 +55,7 @@ export class QuizService {
       },
       where: {
         topicId: {
-          in: topicIds.map(topicId => Number(topicId))
+          in: await this.getAllChildren(topicIds)
         }
       }
     }
