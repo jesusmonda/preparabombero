@@ -1,10 +1,11 @@
-import { Controller, BadRequestException, Get, Post, Put, Delete, Body, HttpStatus, Param, HttpException, UseGuards } from '@nestjs/common';
+import { Controller, UseInterceptors, Get, Post, Put, Delete, Body, HttpStatus, Param, HttpException, UseGuards } from '@nestjs/common';
 import { TopicService } from './topic.service';
 import { UserGuard } from 'src/common/guards/user.guard';
 import { QuizCount, TopicAndTopics } from 'src/common/interfaces/topic.interface';
 import { Topic } from '@prisma/client';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { CreateTopicDto } from './dto/create-topic.dto';
+import { CacheInterceptor } from 'src/common/interceptors/cache.interceptor';
 
 type TopicsResponse = {
   [key: string]: (TopicAndTopics & {
@@ -17,8 +18,9 @@ type TopicsResponse = {
 export class TopicController {
   constructor(private readonly topicService: TopicService) {}
 
-  @UseGuards(UserGuard)
   @Get()
+  @UseGuards(UserGuard)
+  @UseInterceptors(CacheInterceptor)
   async findAll() {
     const topics: TopicAndTopics[] = await this.topicService.findTopics();
     const quizzesCount: QuizCount[] = await this.topicService.quizCount();
@@ -27,6 +29,7 @@ export class TopicController {
 
   @Get(':id')
   @UseGuards(AdminGuard)
+  @UseInterceptors(CacheInterceptor)
   async findOne(@Param('id') topicId: string) {
     if (!topicId || topicId == '') {
       throw new HttpException('TopicId invalido', HttpStatus.BAD_REQUEST);

@@ -1,9 +1,10 @@
-import { Controller, BadRequestException, Get, Body, Param, Delete, Post, UseGuards, HttpStatus, HttpException} from '@nestjs/common';
+import { Controller, UseInterceptors, Get, Body, Param, Delete, Post, UseGuards, HttpStatus, HttpException} from '@nestjs/common';
 import { ReportService } from './report.service';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { UserGuard } from 'src/common/guards/user.guard';
 import { CreateReportDto } from './dto/create-report.dto';
 import { QuizOmitResult } from 'src/common/interfaces/quiz.interface';
+import { CacheInterceptor } from 'src/common/interceptors/cache.interceptor';
 
 @Controller('report')
 export class ReportController {
@@ -11,6 +12,7 @@ export class ReportController {
 
   @Get()
   @UseGuards(AdminGuard)
+  @UseInterceptors(CacheInterceptor)
   async findAll() {
     let report: any[] = await this.reportService.findAll();
     let quizzesId: number[] = report.map(x => x.quizId);

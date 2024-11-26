@@ -1,4 +1,4 @@
-import { Controller, Request, BadRequestException, Put, Query, Get, Delete, HttpException, HttpStatus, Param, Post, Body, UseGuards, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Inject, UseInterceptors, Request, BadRequestException, Put, Query, Get, Delete, HttpException, HttpStatus, Param, Post, Body, UseGuards, InternalServerErrorException } from '@nestjs/common';
 import { QuizService } from './quiz.service';
 import { GenerateQuizDto } from './dto/generate-quiz.dto'
 import { CheckQuizzesDto } from './dto/check-quizzes.dto'
@@ -8,10 +8,17 @@ import { UserGuard } from 'src/common/guards/user.guard';
 import { QuizDto } from './dto/quiz.dto'
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { UserService } from '../user/user.service';
+import { CacheInterceptor } from 'src/common/interceptors/cache.interceptor';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Controller('quiz')
 export class QuizController {
-  constructor(private readonly quizService: QuizService, private readonly userService: UserService) {}
+  constructor(
+    private readonly quizService: QuizService,
+    private readonly userService: UserService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
+  ) {}
 
   @Post('generate')
   @UseGuards(UserGuard)
@@ -32,7 +39,8 @@ export class QuizController {
 
   @Post('check')
   @UseGuards(UserGuard)
-  async checkQuiz(@Body() checkQuizzesDto: CheckQuizzesDto, @Request() request: Request) {
+  @UseInterceptors(CacheInterceptor)
+  async checkQuiz(@Body() checkQuizzesDto: CheckQuizzesDto, @Request() request) {
     const user: User = await this.userService.getUser(request['user'].userId);
     if (!(user.subscribed == true && user.subscription_id != null) && !(user.role == "ADMIN")) {
       throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
@@ -65,12 +73,15 @@ export class QuizController {
       await this.quizService.createStats(user.id, success, fail, not_answered);
     }
 
-    return {success, fail, not_answered, quizzes: response}
+    const res: {success: number, fail: Number, not_answered: Number, quizzes: QuizAndStatus[]} = {success, fail, not_answered, quizzes: response};
+  
+    return res;
   }
 
   @Get('')
   @UseGuards(AdminGuard)
-  async getByTopicId(@Query('topicId') topicId: string, @Request() request: Request) {
+  @UseInterceptors(CacheInterceptor)
+  async getByTopicId(@Query('topicId') topicId: string, @Request() request) {
     if (!topicId || topicId == '') {
       throw new HttpException('TopicId incorrecto', HttpStatus.BAD_REQUEST);
     }
@@ -86,18 +97,25 @@ export class QuizController {
   
   @Post('')
   @UseGuards(AdminGuard)
-  async create(@Body() quizDto: QuizDto) {
+  async create(@Body() quizDto: QuizDto, @Request() request) {
     const quiz = await this.quizService.findQuizByTitle(quizDto.title);
     if (quiz != null) {
       throw new HttpException('Ya existe una pregunta con el mismo titulo', HttpStatus.BAD_REQUEST);
     }
 
-    return await this.quizService.create(quizDto);
+    const response = await this.quizService.create(quizDto);
+
+    console.log(`userId:${request['user'].userId}:endpoint:/quiz/check delete cache`)
+    await this.cacheManager.del(`userId:${request['user'].userId}:endpoint:/quiz/check`);
+    console.log(`userId:${request['user'].userId}:endpoint:/quiz delete cache`)
+    await this.cacheManager.del(`userId:${request['user'].userId}:endpoint:/quiz`);
+
+    return response;
   }
 
   @Put(':id')
   @UseGuards(AdminGuard)
-  async update(@Param('id') quizId: string, @Body() quizDto: QuizDto) {
+  async update(@Param('id') quizId: string, @Body() quizDto: QuizDto, @Request() request) {
     if (!quizId || quizId == '') {
       throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
     }
@@ -111,12 +129,17 @@ export class QuizController {
       throw new HttpException('Pregunta no encontrada', HttpStatus.NOT_FOUND);
     }
 
+    console.log(`userId:${request['user'].userId}:endpoint:/quiz/check delete cache`)
+    await this.cacheManager.del(`userId:${request['user'].userId}:endpoint:/quiz/check`);
+    console.log(`userId:${request['user'].userId}:endpoint:/quiz delete cache`)
+    await this.cacheManager.del(`userId:${request['user'].userId}:endpoint:/quiz`);
+
     return await this.quizService.update(quizIdNumber, quizDto);
   }
 
   @Delete(':id')
   @UseGuards(AdminGuard)
-  async delete(@Param('id') quizId: string) {
+  async delete(@Param('id') quizId: string, @Request() request) {
     if (!quizId || quizId == '') {
       throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
     }
@@ -130,6 +153,13 @@ export class QuizController {
       throw new HttpException('Pregunta no encontrada', HttpStatus.NOT_FOUND);
     }
 
-    return await this.quizService.delete(quizIdNumber);
+    const response = await this.quizService.delete(quizIdNumber);
+
+    console.log(`userId:${request['user'].userId}:endpoint:/quiz/check delete cache`)
+    await this.cacheManager.del(`userId:${request['user'].userId}:endpoint:/quiz/check`);
+    console.log(`userId:${request['user'].userId}:endpoint:/quiz delete cache`)
+    await this.cacheManager.del(`userId:${request['user'].userId}:endpoint:/quiz`);
+
+    return response;
   }
 }

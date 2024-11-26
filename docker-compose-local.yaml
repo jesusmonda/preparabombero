@@ -37,6 +37,13 @@ services:
       - POSTGRES_PASSWORD=admin
       - POSTGRES_USER=admin
       - POSTGRES_DB=preparabombero
+  redis_local:
+    image: redis:7.4.0
+    ports:
+      - 6379:6379
+    volumes:
+      - database_redis_local:/data
 
 volumes:
   database_local:
+  database_redis_local:

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
@@ -19,6 +20,7 @@ import { AdminGuard } from './common/guards/admin.guard';
 import { UserModule } from './modules/user/user.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
 import { ConfigModule } from '@nestjs/config';
+import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
   imports: [
@@ -45,7 +47,14 @@ import { ConfigModule } from '@nestjs/config';
     WebhookModule,
     ConfigModule.forRoot({
       isGlobal: true,
-    })
+    }),
+    CacheModule.register({
+      isGlobal: true,
+      store: redisStore,
+      host: 'redis_local',
+      port: 6379,
+      ttl: 300, // Tiempo de vida en segundos (5 minutos por ejemplo)
+    }),
   ],
   controllers: [AppController],
   providers: [

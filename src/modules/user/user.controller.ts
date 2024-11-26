@@ -1,7 +1,8 @@
-import { Controller, Request, Headers, Get, Post, Body, Patch, Param, Delete, UseGuards, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
+import { Controller, UseInterceptors, Request, Headers, Get, Post, Body, Patch, Param, Delete, UseGuards, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from '@prisma/client';
 import { UserGuard } from 'src/common/guards/user.guard';
+import { CacheInterceptor } from 'src/common/interceptors/cache.interceptor';
 
 @Controller('user')
 export class UserController {
@@ -37,8 +38,9 @@ export class UserController {
     this.userService.deleteSubscription(user.subscription_id, user.id);
   }
 
-  @UseGuards(UserGuard)
   @Get('')
+  @UseGuards(UserGuard)
+  @UseInterceptors(CacheInterceptor)
   async findOne(@Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
     delete user.password;
@@ -49,6 +51,7 @@ export class UserController {
 
   @Get('stats')
   @UseGuards(UserGuard)
+  @UseInterceptors(CacheInterceptor)
   async getStats(@Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
     const QuizStats = await this.userService.getQuizStats(user.id);
