@@ -20,4 +20,6 @@ export class CreateTopicDto {
     @IsNotEmpty({message: 'validation.NOT_EMPTY'})
     @IsEnum(TopicType, {message: 'validation.NOT_ENUM'})
     type: string;
+
+    order: number;
 }

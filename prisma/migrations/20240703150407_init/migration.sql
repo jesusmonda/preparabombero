@@ -53,12 +53,6 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 -- CreateIndex
 CREATE UNIQUE INDEX "User_password_key" ON "User"("password");
 
--- CreateIndex
-CREATE UNIQUE INDEX "Topic_title_key" ON "Topic"("title");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Quiz_title_key" ON "Quiz"("title");
-
 -- AddForeignKey
 ALTER TABLE "Ip" ADD CONSTRAINT "Ip_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

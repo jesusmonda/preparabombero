@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/common/services/database.service';
-import { Quiz, QuizStat, Topic } from '@prisma/client';
+import { Quiz, QuizStat } from '@prisma/client';
 import { QuizOmitResult } from 'src/common/interfaces/quiz.interface';
 import { QuizDto } from 'src/modules/quiz/dto/quiz.dto';
 
@@ -76,15 +76,6 @@ export class QuizService {
     let reponse: Quiz = await this.prisma.quiz.findUnique({
       where: {
         id: Number(quizId)
-      }
-    });
-    return reponse
-  }
-
-  async findQuizByTitle(title: string) : Promise<Quiz>{
-    let reponse: Quiz = await this.prisma.quiz.findUnique({
-      where: {
-        title: title
       }
     });
     return reponse

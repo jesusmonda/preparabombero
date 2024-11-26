@@ -7,83 +7,83 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  ADMIN
-  USER
-}
-
 model User {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique
-  name       String
-  surname    String
-  password   String
-  role       UserRole @default(USER)
-  ips        Ip[]
-  subscribed Boolean @default(false)
-  subscription_id String?
-  cancellation_pending Boolean @default(false)
-  quizStats       QuizStat[]
+  id                   Int        @id @default(autoincrement())
+  email                String     @unique
+  name                 String
+  surname              String
+  password             String
+  role                 UserRole   @default(USER)
+  subscribed           Boolean    @default(false)
+  subscription_id      String?
+  cancellation_pending Boolean    @default(false)
+  ips                  Ip[]
+  quizStats            QuizStat[]
 }
 
 model Ip {
   id     Int    @id @default(autoincrement())
   ip     String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId Int
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Topic {
-  id            Int     @id @default(autoincrement())
-  title         String 
+  id            Int      @id @default(autoincrement())
+  title         String
   categoryTitle String?
-  parent        Topic?  @relation("Topics", fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   parentId      Int?
-  topics        Topic[] @relation("Topics")
-  quizzes       Quiz[]
   created_at    DateTime @default(now())
+  quizzes       Quiz[]
+  parent        Topic?   @relation("Topics", fields: [parentId], references: [id], onDelete: Cascade)
+  topics        Topic[]  @relation("Topics")
+  order         Int
 }
 
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model Quiz {
-  id      Int    @id @default(autoincrement())
-  title   String @unique
-  option1 String
-  option2 String
-  option3 String
-  option4 String
-  result  String
+  id            Int      @id @default(autoincrement())
+  title         String
+  option1       String
+  option2       String
+  option3       String
+  option4       String
+  result        String
   /// TODO Eliminar ?
-  topic   Topic?  @relation(fields: [topicId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  topicId       Int?
   /// TODO Eliminar ?
-  topicId Int? 
-  /// TODO Eliminar ?
-  justification String? 
-  /// TODO Eliminar campo
-  pdf_name String?
-  reports Report[]
+  justification String?
   created_at    DateTime @default(now())
+  /// TODO Eliminar campo
+  pdf_name      String?
+  topic         Topic?   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  reports       Report[]
 }
 
 model QuizStat {
-  id      Int    @id @default(autoincrement())
-  user   User  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId Int
-  success Int
-  fail Int
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  success      Int
+  fail         Int
   not_answered Int
-  created_at    DateTime @default(now())
+  created_at   DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Report {
-  id      Int    @id @default(autoincrement())
-  reason  String @unique
-  quiz    Quiz  @relation(fields: [quizId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  quizId  Int
+  id     Int    @id @default(autoincrement())
+  reason String @unique
+  quizId Int
+  quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
 }
 
 model Info {
-  id      Int    @id @default(0)
-  title   String @unique
+  id          Int    @id @default(0)
+  title       String @unique
   description String @unique
 }
 
+enum UserRole {
+  ADMIN
+  USER
+}

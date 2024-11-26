@@ -50,6 +50,12 @@ export class TopicService {
     }
     delete createTopicDto.type;
 
+
+    const lastTopic = await this.prisma.topic.findFirst({
+      orderBy: { order: 'desc' },
+    });
+
+    createTopicDto.order = lastTopic.order + 10;
     return await this.prisma.topic.create({
       data: createTopicDto
     });
