@@ -55,7 +55,7 @@ export class TopicService {
       orderBy: { order: 'desc' },
     });
 
-    createTopicDto.order = lastTopic.order + 10;
+    createTopicDto.order = lastTopic.order + 20;
     return await this.prisma.topic.create({
       data: createTopicDto
     });
