@@ -21,6 +21,17 @@ model User {
   quizStats            QuizStat[]
 }
 
+model Pdf {
+  id        Int    @id @default(autoincrement())
+  community String?
+  city      String
+  year      String
+  type      String?
+  subtype   String?
+  name      String
+  quizzes   Quiz[]
+}
+
 model Ip {
   id     Int    @id @default(autoincrement())
   ip     String
@@ -58,6 +69,9 @@ model Quiz {
   pdf_name      String?
   topic         Topic?   @relation(fields: [topicId], references: [id], onDelete: Cascade)
   reports       Report[]
+  // Eliminar default 0 cuando esten los pdf en prod.
+  pdfId         Int      @default(0)
+  pdf           Pdf      @relation(fields: [pdfId], references: [id], onDelete: Restrict)
 }
 
 model QuizStat {

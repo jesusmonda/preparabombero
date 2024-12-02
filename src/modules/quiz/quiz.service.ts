@@ -37,8 +37,22 @@ export class QuizService {
     return Array.from(new Set([...parentIds, ...allChildrenIds]));
   }
 
-  async getQuizzesFromTopicIds(userId: number, topicIds: number[], order: "DESC" | "RANDOM") : Promise<QuizOmitResult[]>{
-    topicIds = (userId == 1) ? [662] : topicIds;
+  async getQuizzesFromTopicIds(userId: number, value: number[] | number, type: "LIST" | "EXAM_PDF" | "EXAM_TOPIC", limit: number, order: "DESC" | "RANDOM") : Promise<QuizOmitResult[]>{
+    let searchQuery : object;
+    
+    if (type == "EXAM_TOPIC" || type == "LIST") {
+      searchQuery = {
+        topicId: {
+          in: await this.getAllChildren((userId == 1) ? [662] : [value].flat())
+        }
+      }
+    }
+
+    if (type == "EXAM_PDF") {
+      searchQuery = {
+        pdfId: value
+      }
+    }
 
     const query: any = {
       select: {
@@ -54,9 +68,7 @@ export class QuizService {
         created_at: true
       },
       where: {
-        topicId: {
-          in: await this.getAllChildren(topicIds)
-        }
+        ...searchQuery
       }
     }
     if (order === "DESC") {
@@ -69,7 +81,8 @@ export class QuizService {
   
     let quizs: QuizOmitResult[] = await this.prisma.quiz.findMany(query);
     if (order === "RANDOM") quizs = quizs.sort(function(){ return 0.5 - Math.random() });
-    return (userId == 1) ? quizs.slice(0, 20) : quizs.slice(0, 100)
+    if (limit) quizs = (userId == 1) ? quizs.slice(0, 20) : quizs.slice(0, limit)
+    return quizs;
   }
 
   async findQuiz(quizId: number) : Promise<Quiz>{

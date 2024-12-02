@@ -40,7 +40,8 @@ export class ReportService {
         result: false,
         topicId: true,
         justification: true,
-        created_at: true
+        created_at: true,
+        pdfId: true
       },
       where: {
         id: {

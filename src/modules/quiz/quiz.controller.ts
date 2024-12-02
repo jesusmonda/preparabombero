@@ -20,12 +20,16 @@ export class QuizController {
     if (!(user.subscribed == true && user.subscription_id != null) && !(user.role == "ADMIN")) {
       throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
     }
-    if (generateQuizDto.topicIds.length <= 0) {
-      throw new HttpException('No se ha encontrado preguntas', HttpStatus.BAD_REQUEST);
+
+    let response: QuizOmitResult[];
+    if (generateQuizDto.pdfId) {
+      response = await this.quizService.getQuizzesFromTopicIds(user.id, generateQuizDto.pdfId, "EXAM_PDF", undefined, "RANDOM");
     }
 
-    let topicIds: number[] = generateQuizDto.topicIds;
-    let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, topicIds, "RANDOM");
+    if (generateQuizDto.topicIds) {
+      let topicIds: number[] = generateQuizDto.topicIds;
+      response = await this.quizService.getQuizzesFromTopicIds(user.id, topicIds, "EXAM_TOPIC", 100, "RANDOM");
+    }
 
     return response;
   }
@@ -80,7 +84,7 @@ export class QuizController {
     }
     const user: User = await this.userService.getUser(request['user'].userId);
 
-    let quiz: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, [topicIdNumber], "DESC")
+    let quiz: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, topicIdNumber, "LIST", undefined, "DESC")
     return quiz;
   }
   

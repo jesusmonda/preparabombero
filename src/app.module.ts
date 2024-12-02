@@ -19,6 +19,7 @@ import { AdminGuard } from './common/guards/admin.guard';
 import { UserModule } from './modules/user/user.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
 import { ConfigModule } from '@nestjs/config';
+import { PdfModule } from './modules/pdf/pdf.module';
 
 @Module({
   imports: [
@@ -45,7 +46,8 @@ import { ConfigModule } from '@nestjs/config';
     WebhookModule,
     ConfigModule.forRoot({
       isGlobal: true,
-    })
+    }),
+    PdfModule
   ],
   controllers: [AppController],
   providers: [
