@@ -1,0 +1,39 @@
+{
+	"info": {
+		"_postman_id": "7cf9146a-dc8d-484f-a999-362d8d3376d5",
+		"name": "Pdf",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25049528"
+	},
+	"item": [
+		{
+			"name": "get by topicId",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/quiz?topicId=2",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"quiz"
+					],
+					"query": [
+						{
+							"key": "topicId",
+							"value": "2"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

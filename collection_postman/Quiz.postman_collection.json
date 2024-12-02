@@ -1,13 +1,13 @@
 {
 	"info": {
-		"_postman_id": "7cf9146a-dc8d-484f-a999-362d8d3376d5",
+		"_postman_id": "1e3e1c27-6b1e-4ff5-8b45-940ae4343311",
 		"name": "Quiz",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "25049528"
 	},
 	"item": [
 		{
-			"name": "generate",
+			"name": "generate from topics",
 			"request": {
 				"method": "POST",
 				"header": [
@@ -20,6 +20,39 @@
 				"body": {
 					"mode": "raw",
 					"raw": "{\n    \"topicIds\": [1]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/quiz/generate",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"quiz",
+						"generate"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "generate from pdf",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"pdfId\": 1\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -85,7 +118,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"title\":\"eeiuioy\",\n    \"option1\":\"eeeeeeeeeeee\",\n    \"option2\":\"bb\",\n    \"option3\":\"cc\",\n    \"option4\":\"dd\",\n    \"result\":\"rr\",\n    \"topicId\": 25\n}",
+					"raw": "{\n    \"title\":\"eeiuieeeoy\",\n    \"option1\":\"eeeeeeeeeeee\",\n    \"option2\":\"bb\",\n    \"option3\":\"cc\",\n    \"option4\":\"dd\",\n    \"result\":\"rr\",\n    \"topicId\": 1,\n    \"justification\": \"eee\",\n    \"pdfId\": 0\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -93,13 +126,13 @@
 					}
 				},
 				"url": {
-					"raw": "{{url}}/quiz/7",
+					"raw": "{{url}}/quiz/5",
 					"host": [
 						"{{url}}"
 					],
 					"path": [
 						"quiz",
-						"7"
+						"5"
 					]
 				}
 			},
@@ -118,7 +151,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"title\":\"aa\",\n    \"option1\":\"aa\",\n    \"option2\":\"bb\",\n    \"option3\":\"cc\",\n    \"option4\":\"dd\",\n    \"result\":\"rr\",\n    \"topicId\": 1,\n    \"justification\": \"porque si\"\n}",
+					"raw": "{\n    \"title\":\"aeeeea\",\n    \"option1\":\"aa\",\n    \"option2\":\"bb\",\n    \"option3\":\"cc\",\n    \"option4\":\"dd\",\n    \"result\":\"rr\",\n    \"topicId\": 1,\n    \"justification\": \"porque si\",\n    \"pdfId\": 0\n}",
 					"options": {
 						"raw": {
 							"language": "json"
