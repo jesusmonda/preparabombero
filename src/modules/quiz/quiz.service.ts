@@ -1,12 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from 'src/common/services/database.service';
 import { Quiz, QuizStat } from '@prisma/client';
 import { QuizOmitResult } from 'src/common/interfaces/quiz.interface';
 import { QuizDto } from 'src/modules/quiz/dto/quiz.dto';
+import { UserService } from '../user/user.service';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class QuizService {
   constructor(
+    private readonly userService: UserService,
     private prisma: PrismaService
   ) {}
 
@@ -38,7 +41,9 @@ export class QuizService {
   }
 
   async getQuizzesFromTopicIds(userId: number, topicIds: number[], order: "DESC" | "RANDOM") : Promise<QuizOmitResult[]>{
-    topicIds = (userId == 1) ? [662] : topicIds;
+    const user: User = await this.userService.getUser(userId);
+    const subscribed = (user.subscribed == true && user.subscription_id != null);
+    topicIds = (!subscribed) ? [662] : topicIds;
 
     const query: any = {
       select: {
@@ -69,7 +74,7 @@ export class QuizService {
   
     let quizs: QuizOmitResult[] = await this.prisma.quiz.findMany(query);
     if (order === "RANDOM") quizs = quizs.sort(function(){ return 0.5 - Math.random() });
-    return (userId == 1) ? quizs.slice(0, 20) : quizs.slice(0, 100)
+    return (!subscribed) ? quizs.slice(0, 20) : quizs.slice(0, 100)
   }
 
   async findQuiz(quizId: number) : Promise<Quiz>{

@@ -26,8 +26,8 @@ export class WebhookController {
     }
       
     const user: User = await this.userService.getUser(body.data.object.metadata.userId);
-    if (user.id == 1 || user.id == 2){
-      throw new HttpException('El usuario demo y admin no pueden desubscribirse', HttpStatus.BAD_REQUEST);
+    if (user.id == 2){
+      throw new HttpException('El usuario admin no pueden desubscribirse', HttpStatus.BAD_REQUEST);
     }
     if (!(user.subscribed == true && user.subscription_id != null) || user.role == 'ADMIN') { // Puede ser cancelado por fraude, no por solicitud del usuario.
       throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
@@ -42,8 +42,8 @@ export class WebhookController {
     }
 
     const user: User = await this.userService.getUser(body.data.object.metadata.userId);
-    if (user.id == 1 || user.id == 2){
-      throw new HttpException('El usuario de demo y admin no pueden subscribirse', HttpStatus.BAD_REQUEST);
+    if (user.id == 2){
+      throw new HttpException('El usuario de admin no pueden subscribirse', HttpStatus.BAD_REQUEST);
     }
     if (!(user.subscribed == false && user.subscription_id == null && user.cancellation_pending == false) || user.role == 'ADMIN') {
       throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);

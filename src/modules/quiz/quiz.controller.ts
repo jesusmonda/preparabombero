@@ -17,9 +17,6 @@ export class QuizController {
   @UseGuards(UserGuard)
   async generateQuiz(@Body() generateQuizDto: GenerateQuizDto, @Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
-    if (!(user.subscribed == true && user.subscription_id != null) && !(user.role == "ADMIN")) {
-      throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
-    }
     if (generateQuizDto.topicIds.length <= 0) {
       throw new HttpException('No se ha encontrado preguntas', HttpStatus.BAD_REQUEST);
     }
@@ -34,9 +31,6 @@ export class QuizController {
   @UseGuards(UserGuard)
   async checkQuiz(@Body() checkQuizzesDto: CheckQuizzesDto, @Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
-    if (!(user.subscribed == true && user.subscription_id != null) && !(user.role == "ADMIN")) {
-      throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
-    }
 
     let fail: number = 0;
     let success: number = 0;
