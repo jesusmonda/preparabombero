@@ -15,7 +15,7 @@ export class UserService {
     });
   }
 
-  async createSubscriptionLink(host: string, userId: number) {
+  async createSubscriptionLink(origin: string, userId: number) {
     const subscription_data = await this.stripe.paymentLinks.create({
       line_items: [
         {
@@ -26,7 +26,7 @@ export class UserService {
       after_completion: {
         type: "redirect",
         redirect: {
-          url: process.env.ENVIRONMENT == "prod" ? `https://preparabombero.com/profile` : "http://localhost:4200/profile"
+          url: process.env.ENVIRONMENT == "prod" ? `${origin}/profile` : "http://localhost:4200/profile"
         }
       },
       allow_promotion_codes: false,

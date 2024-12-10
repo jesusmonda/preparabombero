@@ -9,7 +9,7 @@ export class UserController {
 
   @UseGuards(UserGuard)
   @Post('subscription')
-  async createSubscriptionLink(@Headers('Host') host: string, @Request() request: Request) {
+  async createSubscriptionLink(@Headers('Origin') origin: string, @Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
 
     if (user.id == 2){
@@ -19,7 +19,7 @@ export class UserController {
       throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
     }
     
-    return this.userService.createSubscriptionLink(host, user.id);
+    return this.userService.createSubscriptionLink(origin, user.id);
   }
 
   @UseGuards(UserGuard)
