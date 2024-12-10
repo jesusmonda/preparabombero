@@ -24,11 +24,11 @@ export class WebhookController {
     if (body.type != "customer.subscription.deleted") {
       throw new HttpException('Evento incorrecto', HttpStatus.BAD_REQUEST);
     }
+
+    const user: User = await this.userService.getUser(body.data.object.metadata.userId);
     if (body.data.object.id != user.subscription_id) {
       throw new HttpException('Evento incorrecto', HttpStatus.BAD_REQUEST);
     }
-      
-    const user: User = await this.userService.getUser(body.data.object.metadata.userId);
     if (user.id == 2){
       throw new HttpException('El usuario admin no pueden desubscribirse', HttpStatus.BAD_REQUEST);
     }
