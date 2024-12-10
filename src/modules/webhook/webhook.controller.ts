@@ -24,6 +24,9 @@ export class WebhookController {
     if (body.type != "customer.subscription.deleted") {
       throw new HttpException('Evento incorrecto', HttpStatus.BAD_REQUEST);
     }
+    if (body.data.object.id != user.subscription_id) {
+      throw new HttpException('Evento incorrecto', HttpStatus.BAD_REQUEST);
+    }
       
     const user: User = await this.userService.getUser(body.data.object.metadata.userId);
     if (user.id == 2){
@@ -33,7 +36,7 @@ export class WebhookController {
       throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
     }
 
-    	return this.webhookService.updateSubscription(user.id, "CANCELED", body.data.object.id);
+    return this.webhookService.updateSubscription(user.id, "CANCELED", body.data.object.id);
   }
   
   async subscriptionCreate(@Body() body: any) {
