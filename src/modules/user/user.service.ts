@@ -19,7 +19,7 @@ export class UserService {
     const subscription_data = await this.stripe.paymentLinks.create({
       line_items: [
         {
-          price: 'price_1PtprERpTLkqKg0E05vI3b69',
+          price: 'price_1QUua4FR1WvHugBQhhvrW7tO',
           quantity: 1,
         },
       ],
