@@ -7,11 +7,11 @@ export class PdfService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(sort: string): Promise<Pdf[]> {
-    const query: {city?: 'desc', community?: 'desc'} = {}
+    const query: {city?: 'asc', community?: 'asc'} = {}
     if (sort == 'community') {
-      query.community = 'desc';
+      query.community = 'asc';
     } else {
-      query.city = 'desc';
+      query.city = 'asc';
     }
     return await this.prisma.pdf.findMany({
       orderBy: query
