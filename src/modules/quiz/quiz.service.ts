@@ -1,12 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from 'src/common/services/database.service';
 import { Quiz, QuizStat } from '@prisma/client';
 import { QuizOmitResult } from 'src/common/interfaces/quiz.interface';
 import { QuizDto } from 'src/modules/quiz/dto/quiz.dto';
+import { UserService } from '../user/user.service';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class QuizService {
   constructor(
+    private readonly userService: UserService,
     private prisma: PrismaService
   ) {}
 
@@ -38,17 +41,24 @@ export class QuizService {
   }
 
   async getQuizzesFromTopicIds(userId: number, value: number[] | number, type: "LIST" | "EXAM_PDF" | "EXAM_TOPIC", limit: number, order: "DESC" | "RANDOM") : Promise<QuizOmitResult[]>{
+    const user: User = await this.userService.getUser(userId);
+    const subscribed = (user.subscribed == true && user.subscription_id != null);
+    const topicIds = (!subscribed) ? [662] : [value].flat();
     let searchQuery : object;
     
     if (type == "EXAM_TOPIC" || type == "LIST") {
       searchQuery = {
         topicId: {
-          in: await this.getAllChildren((userId == 1) ? [662] : [value].flat())
+          in: await this.getAllChildren(topicIds)
         }
       }
     }
 
     if (type == "EXAM_PDF") {
+      if (!(user.subscribed == true && user.subscription_id != null) && !(user.role == "ADMIN")) {
+        throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
+      }
+
       searchQuery = {
         pdfId: value
       }
@@ -81,7 +91,7 @@ export class QuizService {
   
     let quizs: QuizOmitResult[] = await this.prisma.quiz.findMany(query);
     if (order === "RANDOM") quizs = quizs.sort(function(){ return 0.5 - Math.random() });
-    if (limit) quizs = (userId == 1) ? quizs.slice(0, 20) : quizs.slice(0, limit)
+    if (limit) quizs = (!subscribed) ? quizs.slice(0, 20) : quizs.slice(0, limit)
     return quizs;
   }
 

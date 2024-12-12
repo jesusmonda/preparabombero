@@ -17,15 +17,11 @@ export class QuizController {
   @UseGuards(UserGuard)
   async generateQuiz(@Body() generateQuizDto: GenerateQuizDto, @Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
-    if (!(user.subscribed == true && user.subscription_id != null) && !(user.role == "ADMIN")) {
-      throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
-    }
 
     let response: QuizOmitResult[];
     if (generateQuizDto.pdfId) {
       response = await this.quizService.getQuizzesFromTopicIds(user.id, generateQuizDto.pdfId, "EXAM_PDF", undefined, "RANDOM");
     }
-
     if (generateQuizDto.topicIds) {
       let topicIds: number[] = generateQuizDto.topicIds;
       response = await this.quizService.getQuizzesFromTopicIds(user.id, topicIds, "EXAM_TOPIC", 100, "RANDOM");
@@ -38,9 +34,6 @@ export class QuizController {
   @UseGuards(UserGuard)
   async checkQuiz(@Body() checkQuizzesDto: CheckQuizzesDto, @Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
-    if (!(user.subscribed == true && user.subscription_id != null) && !(user.role == "ADMIN")) {
-      throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
-    }
 
     let fail: number = 0;
     let success: number = 0;
