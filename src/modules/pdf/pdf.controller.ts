@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { PdfService } from './pdf.service';
 import { Pdf } from '@prisma/client';
 import { UserGuard } from 'src/common/guards/user.guard';
@@ -9,8 +9,8 @@ export class PdfController {
 
   @Get()
   @UseGuards(UserGuard)
-  async findAll() {
-    let response: Pdf[] = await this.pdfService.findAll();
+  async findAll(@Query('sort') sort: string = 'community') {
+    let response: Pdf[] = await this.pdfService.findAll(sort);
     return response;
   }
 }
