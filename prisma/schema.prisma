@@ -72,6 +72,8 @@ model Quiz {
   // Eliminar default 0 cuando esten los pdf en prod.
   pdfId         Int      @default(0)
   pdf           Pdf      @relation(fields: [pdfId], references: [id], onDelete: Restrict)
+
+  @@unique([title, option1, option2, option3, option4, pdf_name])
 }
 
 model QuizStat {
