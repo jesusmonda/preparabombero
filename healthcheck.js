@@ -20,8 +20,6 @@ async function checkHealth() {
         if (response.data.status === 'error') {
             console.log('El estado es error. Notificando en SNS...');
             await notifySNS('El estado de salud es "error". Se requiere atención.');
-        } else {
-            console.log('El estado de salud es correcto.');
         }
 
         await queryDatabase();
@@ -38,8 +36,7 @@ async function queryDatabase() {
 
     try {
         await client.connect();
-        const res = await client.query('SELECT 1');
-        console.log('Consulta exitosa:', res.rows);
+        await client.query('SELECT 1');
     } catch (error) {
         console.error('Error al realizar la consulta en la base de datos:', error.message);
         await notifySNS(`Error al realizar la consulta en la base de datos: ${error.message}`);
