@@ -25,7 +25,6 @@ export class WebhookController {
     }
 
     Logger.log(`Invalid event ${body.type}`);
-    throw new HttpException('Evento incorrecto', HttpStatus.BAD_REQUEST);
   }
 
   async subscriptionDeleted(@Body() body: any) {
@@ -64,8 +63,8 @@ export class WebhookController {
       throw new HttpException('El usuario de admin no pueden subscribirse', HttpStatus.BAD_REQUEST);
     }
     if (!(user.subscribed == false && user.subscription_id == null && user.cancellation_pending == false) || user.role == 'ADMIN') {
-      Logger.log(`User not subscribed`);
-      throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
+      Logger.log(`User subscribed`);
+      throw new HttpException('Usuario subscrito', HttpStatus.BAD_REQUEST);
     }
 
     Logger.log(`Creating subscription`);

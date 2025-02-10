@@ -15,6 +15,6 @@ aws cloudwatch put-metric-data --namespace "Backup" --metric-name "BackupStatus"
 
 # Configurar el script para ejecutarse cada 12 horas usando cron
 # (Ejecuta 'crontab -e' y añade la siguiente línea)
-# 0 */12 * * * /opt/preparabombero/database_backup/backup.sh
+# 0 */12 * * * /opt/preparabombero/web/backup.sh
 
 # pg_restore -U Cyb14BXD519W -h localhost -p 5433 -d preparabombero -F c -v backup_2024-09-12_11-00-05.sql
