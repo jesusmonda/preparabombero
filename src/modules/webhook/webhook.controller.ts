@@ -22,6 +22,22 @@ export class WebhookController {
         Logger.log("Subscription is active, creating")
         return await this.subscriptionCreate(body);
       }
+
+      if (body.data.object.status == 'canceled') {
+        Logger.log("Subscription cancelling")
+        const user: User = await this.userService.getUser(body.data.object.metadata.userId);
+        if (user.id == 2){
+          Logger.log(`Admin user is not be able to unsubscribed`);
+          throw new HttpException('El usuario admin no pueden desubscribirse', HttpStatus.BAD_REQUEST);
+        }
+        if (!(user.subscribed == true && user.subscription_id != null) || user.role == 'ADMIN') { // Puede ser cancelado por fraude, no por solicitud del usuario.
+          Logger.log(`User not subscribed`);
+          throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
+        }
+    
+        Logger.log(`Deleting subscription`);
+        return this.webhookService.updateSubscription(user.id, "CANCELED", body.data.object.id);
+      }
     }
 
     Logger.log(`Invalid event ${body.type}`);

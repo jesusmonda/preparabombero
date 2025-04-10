@@ -5,6 +5,8 @@ import { RegisterAuthDto } from './dto/register-auth.dto';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
+import { ResetPasswordAuthDto } from './dto/resetpassword-auth.dto';
+import { RecoveryPasswordAuthDto } from './dto/recoverypassword-auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -31,7 +33,7 @@ export class AuthController {
     
     const user: User = await this.authService.findOne(registerAuthDto.email);
     if (user) {
-      throw new HttpException('Usuario no encontrado', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Usuario ya registrado', HttpStatus.BAD_REQUEST);
     }
 
     if (registerAuthDto.password !== registerAuthDto.repeatPassword) {
@@ -40,5 +42,15 @@ export class AuthController {
 
     registerAuthDto.password = await bcrypt.hash(registerAuthDto.password, await bcrypt.genSalt());
     return await this.authService.create(registerAuthDto);
+  }
+
+  @Post('resetpassword')
+  async resetPassword(@Body() resetPasswordAuthDto: ResetPasswordAuthDto) {
+    return await this.authService.resetPassword(resetPasswordAuthDto);
+  }
+
+  @Post('recoverypassword')
+  async recoveryPassword(@Body() recoveryPasswordAuthDto: RecoveryPasswordAuthDto) {
+    return await this.authService.recoveryPassword(recoveryPasswordAuthDto);
   }
 }

@@ -17,6 +17,7 @@ model User {
   subscribed           Boolean    @default(false)
   subscription_id      String?
   cancellation_pending Boolean    @default(false)
+  token                String     @default(uuid())
   ips                  Ip[]
   quizStats            QuizStat[]
 }
