@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"email\": \"jesus9@gmail.com\",\n    \"password\": \"eeee\"\n}",
+					"raw": "{\n    \"email\": \"jesus99999@gmail.com\",\n    \"password\": \"holaaa\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -40,7 +40,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"email\": \"jesus999@gmail.com\",\n    \"password\": \"eeee\",\n    \"repeatPassword\": \"eeee\",\n    \"name\": \"eee\",\n    \"surname\": \"eee\"\n}",
+					"raw": "{\n    \"email\": \"jesusmonda9@gmail.com\",\n    \"password\": \"demo\",\n    \"repeatPassword\": \"demo\",\n    \"name\": \"eee\",\n    \"surname\": \"eee\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -55,6 +55,60 @@
 					"path": [
 						"auth",
 						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reset password",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"jesus99999@gmail.com\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/auth/resetpassword",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"auth",
+						"resetpassword"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Recovery password",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"token\": \"798e1506-1342-4c1e-83f8-56ab46b9b858\",\n    \"password\": \"holaaa\",\n    \"repeatPassword\": \"holaaa\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/auth/recoverypassword",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"auth",
+						"recoverypassword"
 					]
 				}
 			},
