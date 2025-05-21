@@ -60,10 +60,7 @@ export class QuizService {
       }
 
       searchQuery = {
-        pdfId: value,
-        topicId: {
-          not: null
-        }
+        pdfId: value
       }
     }
 
