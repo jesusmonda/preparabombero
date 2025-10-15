@@ -16,13 +16,12 @@ export class WebhookController {
       return await this.subscriptionDeleted(body);
     }
 
-    if (body.type == "customer.subscription.created" || body.type == "customer.subscription.updated") {
-      Logger.log("Creating or updating subscription")
-      if (body.data.object.status == 'active') {
-        Logger.log("Subscription is active, creating")
-        return await this.subscriptionCreate(body);
-      }
+    if (body.type == "invoice.paid") {
+      Logger.log("Subscription payed, creating subscription")
+      return await this.subscriptionCreate(body);
+    }
 
+    if (body.type == "customer.subscription.updated") {
       if (body.data.object.status == 'canceled') {
         Logger.log("Subscription cancelling")
         const user: User = await this.userService.getUser(body.data.object.metadata.userId);
@@ -68,12 +67,12 @@ export class WebhookController {
   }
   
   async subscriptionCreate(@Body() body: any) {
-    if (body.type != "customer.subscription.created" && body.type != "customer.subscription.updated") {
+    if (body.type != "invoice.paid") {
       Logger.log(`Invalid event ${body.type}`);
       throw new HttpException('Evento incorrecto', HttpStatus.BAD_REQUEST);
     }
 
-    const user: User = await this.userService.getUser(body.data.object.metadata.userId);
+    const user: User = await this.userService.getUser(body.data.object.subscription_details.metadata.userId);
     if (user.id == 2){
       Logger.log(`Admin user is not be able to unsubscribed`);
       throw new HttpException('El usuario de admin no pueden subscribirse', HttpStatus.BAD_REQUEST);
@@ -84,6 +83,7 @@ export class WebhookController {
     }
 
     Logger.log(`Creating subscription`);
-    return this.webhookService.updateSubscription(user.id, "CREATED", body.data.object.id);
+    console.log(body)
+    return this.webhookService.updateSubscription(user.id, "CREATED", body.data.object.subscription);
   }
 }
