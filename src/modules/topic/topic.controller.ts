@@ -17,7 +17,6 @@ type TopicsResponse = {
 export class TopicController {
   constructor(private readonly topicService: TopicService) {}
 
-  @UseGuards(UserGuard)
   @Get()
   async findAll() {
     const topics: TopicAndTopics[] = await this.topicService.findTopics();
@@ -148,7 +147,3 @@ export class TopicController {
     return await this.topicService.delete(idNumber);
   }
 }
-function Query(arg0: string): (target: TopicController, propertyKey: "findOne", parameterIndex: 0) => void {
-  throw new Error('Function not implemented.');
-}
-

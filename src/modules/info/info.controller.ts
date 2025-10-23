@@ -2,7 +2,7 @@ import { Controller, Body, Get, Put, UseGuards } from '@nestjs/common';
 import { InfoService } from './info.service';
 import { UpdateInfoDto } from './dto/update-info.dto';
 import { InfoOmitId } from 'src/common/interfaces/info.interface';
-import { UserGuard } from 'src/common/guards/user.guard';
+import { AdminGuard } from 'src/common/guards/admin.guard';
 
 @Controller('info')
 export class InfoController {
@@ -20,7 +20,7 @@ export class InfoController {
   }
 
   @Put('')
-  @UseGuards(UserGuard)
+  @UseGuards(AdminGuard)
   async update(@Body() updateInfoDto: UpdateInfoDto) {
     return await this.infoService.update(updateInfoDto);
   }

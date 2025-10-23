@@ -23,7 +23,6 @@ export class ReportController {
   }
 
   @Post()
-  @UseGuards(UserGuard)
   async create(@Body() createReportDto: CreateReportDto) {
     return await this.reportService.create(createReportDto);
   }

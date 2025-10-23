@@ -8,7 +8,6 @@ export class PdfController {
   constructor(private readonly pdfService: PdfService) {}
 
   @Get()
-  @UseGuards(UserGuard)
   async findAll(@Query('sort') sort: string = 'community') {
     let response: Pdf[] = await this.pdfService.findAll(sort);
     return response;

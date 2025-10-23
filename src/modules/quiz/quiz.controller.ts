@@ -14,7 +14,6 @@ export class QuizController {
   constructor(private readonly quizService: QuizService, private readonly userService: UserService) {}
 
   @Post('generate')
-  @UseGuards(UserGuard)
   async generateQuiz(@Body() generateQuizDto: GenerateQuizDto, @Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
 
@@ -31,7 +30,6 @@ export class QuizController {
   }
 
   @Post('check')
-  @UseGuards(UserGuard)
   async checkQuiz(@Body() checkQuizzesDto: CheckQuizzesDto, @Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
 
