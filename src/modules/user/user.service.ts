@@ -46,14 +46,16 @@ export class UserService {
     return {url: subscription_data.url}
   }
 
-  async getUser(userId: number): Promise<User> {
-    userId = Number(userId);
+  async getUser(userId: number | undefined): Promise<User> {
+    if (userId) {
+      userId = Number(userId);
 
-    return await this.prisma.user.findUnique({
-      where: {
-        id: userId
-      }
-    });
+      return await this.prisma.user.findUnique({
+        where: {
+          id: userId
+        }
+      });
+    }
   }
 
   async deleteSubscription(subscriptionId: string, userId: number): Promise<UserNotSensitive> {

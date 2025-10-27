@@ -1,10 +1,10 @@
-import { Controller, Request, BadRequestException, Put, Query, Get, Delete, HttpException, HttpStatus, Param, Post, Body, UseGuards, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Request, BadRequestException, Put, Query, Get, Delete, HttpException, HttpStatus, Param, Post, Body, UseGuards, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { QuizService } from './quiz.service';
 import { GenerateQuizDto } from './dto/generate-quiz.dto'
 import { CheckQuizzesDto } from './dto/check-quizzes.dto'
 import { QuizOmitResult, QuizAndStatus } from 'src/common/interfaces/quiz.interface';
 import { Quiz, User } from '@prisma/client';
-import { UserGuard } from 'src/common/guards/user.guard';
+import { OptionalUserGuard } from 'src/common/guards/optional-user.guard';
 import { QuizDto } from './dto/quiz.dto'
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { UserService } from '../user/user.service';
@@ -13,26 +13,26 @@ import { UserService } from '../user/user.service';
 export class QuizController {
   constructor(private readonly quizService: QuizService, private readonly userService: UserService) {}
 
+  @UseGuards(OptionalUserGuard)
   @Post('generate')
-  async generateQuiz(@Body() generateQuizDto: GenerateQuizDto, @Request() request: Request) {
-    const user: User = await this.userService.getUser(request['user'].userId);
+  async generateQuizTopic(@Body() generateQuizDto: GenerateQuizDto, @Request() request: Request) {
 
-    let response: QuizOmitResult[];
-    if (generateQuizDto.pdfId) {
-      response = await this.quizService.getQuizzesFromTopicIds(user.id, generateQuizDto.pdfId, "EXAM_PDF", undefined, "RANDOM");
-    }
-    if (generateQuizDto.topicIds) {
-      let topicIds: number[] = generateQuizDto.topicIds;
-      response = await this.quizService.getQuizzesFromTopicIds(user.id, topicIds, "EXAM_TOPIC", 100, "RANDOM");
-    }
+    if (generateQuizDto.topicIds && request['user']) {
+      const user: User = await this.userService.getUser(request['user']?.userId);
 
-    return response;
+      let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user?.id, generateQuizDto.topicIds, "EXAM_TOPIC", "RANDOM");
+      return response;
+    } else if (generateQuizDto.pdfId) {
+      let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(undefined, generateQuizDto.pdfId, "EXAM_PDF", "RANDOM");
+      return response;
+    } else {
+      throw new UnauthorizedException();
+    }
   }
 
+  @UseGuards(OptionalUserGuard)
   @Post('check')
   async checkQuiz(@Body() checkQuizzesDto: CheckQuizzesDto, @Request() request: Request) {
-    const user: User = await this.userService.getUser(request['user'].userId);
-
     let fail: number = 0;
     let success: number = 0;
     let not_answered: number = 0;
@@ -51,13 +51,23 @@ export class QuizController {
         fail++;
         status = "fail"
       };
-      response.push({... quiz, status})
-      return response;
+      return {... quiz, status}
     });
-    await Promise.all(promises);
+    response = await Promise.all(promises);
 
-    if (checkQuizzesDto.type == "EXAM") {
-      await this.quizService.createStats(user.id, success, fail, not_answered);
+    if (request['user']){
+      const user: User = await this.userService.getUser(request['user'].userId);
+      const subscribed = (user.subscribed == true && user.subscription_id != null);
+
+      if (checkQuizzesDto.type == "EXAM") {
+        await this.quizService.createStats(user.id, success, fail, not_answered);
+      }
+
+      if (!subscribed) {
+        response.map(x => x.justification = null);
+      }
+    } else {
+      response.map(x => x.justification = null);
     }
 
     return {success, fail, not_answered, quizzes: response}
@@ -75,7 +85,7 @@ export class QuizController {
     }
     const user: User = await this.userService.getUser(request['user'].userId);
 
-    let quiz: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, topicIdNumber, "LIST", undefined, "DESC")
+    let quiz: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, topicIdNumber, "LIST", "DESC")
     return quiz;
   }
   
