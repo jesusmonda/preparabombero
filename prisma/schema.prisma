@@ -20,6 +20,7 @@ model User {
   token                String     @default(uuid())
   ips                  Ip[]
   quizStats            QuizStat[]
+  quizFavorite         QuizFavorite[]
 }
 
 model Pdf {
@@ -52,7 +53,6 @@ model Topic {
   order         Int
 }
 
-/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model Quiz {
   id            Int      @id @default(autoincrement())
   title         String
@@ -74,7 +74,16 @@ model Quiz {
   pdfId         Int      @default(0)
   pdf           Pdf      @relation(fields: [pdfId], references: [id], onDelete: Restrict)
 
-  @@unique([title, option1, option2, option3, option4, pdf_name])
+  quizzes_favorites   QuizFavorite[]
+}
+
+model QuizFavorite {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  quizId         Int
+  quiz           Quiz      @relation(fields: [quizId], references: [id], onDelete: Restrict)
 }
 
 model QuizStat {

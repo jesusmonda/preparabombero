@@ -8,6 +8,7 @@ import { OptionalUserGuard } from 'src/common/guards/optional-user.guard';
 import { QuizDto } from './dto/quiz.dto'
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { UserService } from '../user/user.service';
+import { UserGuard } from 'src/common/guards/user.guard';
 
 @Controller('quiz')
 export class QuizController {
@@ -131,5 +132,44 @@ export class QuizController {
     }
 
     return await this.quizService.delete(quizIdNumber);
+  }
+
+  // Favorite
+  @Get('favorite')
+  @UseGuards(UserGuard)
+  async getFavoriteQuiz(@Request() request: Request) {
+    const user: User = await this.userService.getUser(request['user'].userId);
+
+    let quiz: QuizOmitResult[] = await this.quizService.getFavoriteQuiz(user.id)
+    return quiz;
+  }
+  
+  @Post('favorite')
+  @UseGuards(UserGuard)
+  async createFavoriteQuiz(@Body() quiz: {quizId: number}, @Request() request: Request) {
+    const user: User = await this.userService.getUser(request['user'].userId);
+
+    return await this.quizService.createFavoriteQuiz(user.id, quiz.quizId);
+  }
+
+  @Delete(':id/favorite')
+  @UseGuards(UserGuard)
+  async deleteFavoriteQuiz(@Param('id') quizId: string, @Request() request: Request) {
+    if (!quizId || quizId == '') {
+      throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
+    }
+    const quizIdNumber: number = Number(quizId)
+    if (isNaN(quizIdNumber)) {
+      throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
+    }
+  
+    let quiz: Quiz = await this.quizService.findQuiz(quizIdNumber);
+    if (quiz == null) {
+      throw new HttpException('Pregunta no encontrada', HttpStatus.NOT_FOUND);
+    }
+
+    const user: User = await this.userService.getUser(request['user'].userId);
+
+    return await this.quizService.deleteFavoriteQuiz(user.id, quizIdNumber);
   }
 }

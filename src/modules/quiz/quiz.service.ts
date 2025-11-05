@@ -155,4 +155,60 @@ export class QuizService {
     });
     return response
   }
+
+  async getFavoriteQuiz(userId: number) : Promise<QuizOmitResult[]>{
+    const favorites = await this.prisma.quizFavorite.findMany({
+      where: {
+        userId: Number(userId),
+      },
+      include: {
+        quiz: {
+          select: {
+            id: true,
+            title: true,
+            option1: true,
+            option2: true,
+            option3: true,
+            option4: true,
+            topicId: true,
+            justification: true,
+            created_at: true,
+            pdfId: true
+          },
+        },
+      },
+    });
+
+    return favorites.map((f) => f.quiz);
+  }
+
+  async createFavoriteQuiz(userId: number, quizId: number) {
+    const favorite = await this.prisma.quizFavorite.findFirst({
+      where: { userId, quizId },
+    });
+
+    if (favorite) {
+      throw new HttpException('Pregunta ya en favoritos', HttpStatus.BAD_REQUEST);
+    }
+
+    return this.prisma.quizFavorite.create({
+      data: {
+        userId: Number(userId),
+        quizId: Number(quizId),
+      },
+    });
+  }
+
+  async deleteFavoriteQuiz(userId: number, quizId: number) {
+    const favorite = await this.prisma.quizFavorite.findFirst({
+      where: { userId, quizId },
+    });
+
+    if (favorite) {
+      return await this.prisma.quizFavorite.delete({
+        where: { id: favorite.id },
+      });
+    }
+    throw new HttpException('Pregunta no está en favoritos', HttpStatus.BAD_REQUEST);
+  }
 }
