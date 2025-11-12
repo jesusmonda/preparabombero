@@ -20,6 +20,10 @@ export class QuizController {
 
     if (generateQuizDto.topicIds && request['user']) {
       const user: User = await this.userService.getUser(request['user'].userId);
+      const subscribed = (user.subscribed == true && user.subscription_id != null);
+      if (!subscribed) {
+        throw new UnauthorizedException();
+      }
 
       let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, generateQuizDto.topicIds, "EXAM_TOPIC", "RANDOM");
       return response;
