@@ -19,9 +19,9 @@ export class QuizController {
   async generateQuizTopic(@Body() generateQuizDto: GenerateQuizDto, @Request() request: Request) {
 
     if (generateQuizDto.topicIds && request['user']) {
-      const user: User = await this.userService.getUser(request['user']?.userId);
+      const user: User = await this.userService.getUser(request['user'].userId);
 
-      let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user?.id, generateQuizDto.topicIds, "EXAM_TOPIC", "RANDOM");
+      let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, generateQuizDto.topicIds, "EXAM_TOPIC", "RANDOM");
       return response;
     } else if (generateQuizDto.pdfId) {
       let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(undefined, generateQuizDto.pdfId, "EXAM_PDF", "RANDOM");
@@ -139,6 +139,10 @@ export class QuizController {
   @UseGuards(UserGuard)
   async getFavoriteQuiz(@Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
+    const subscribed = (user.subscribed == true && user.subscription_id != null);
+    if (!subscribed) {
+      throw new UnauthorizedException();
+    }
 
     let quiz: QuizOmitResult[] = await this.quizService.getFavoriteQuiz(user.id)
     return quiz;
