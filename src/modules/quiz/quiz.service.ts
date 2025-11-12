@@ -156,7 +156,25 @@ export class QuizService {
     return response
   }
 
-  async getFavoriteQuiz(userId: number) : Promise<QuizOmitResult[]>{
+  async getRootTopic(topicId: number): Promise<{ id: number; title: string } | null> {
+    let current = await this.prisma.topic.findUnique({
+      where: { id: topicId },
+      select: { id: true, title: true, parentId: true },
+    });
+    if (!current) return null;
+
+    while (current.parentId) {
+      current = await this.prisma.topic.findUnique({
+        where: { id: current.parentId },
+        select: { id: true, title: true, parentId: true },
+      });
+      if (!current) return null; // por si se rompe la cadena
+    }
+    // aquí current.parentId es null => root
+    return { id: current.id, title: current.title };
+  }
+
+  async getFavoriteQuiz(userId: number) : Promise<any[]>{
     const favorites = await this.prisma.quizFavorite.findMany({
       where: {
         userId: Number(userId),
@@ -179,7 +197,16 @@ export class QuizService {
       },
     });
 
-    return favorites.map((f) => f.quiz);
+    return Promise.all(
+      favorites.map(async (f) => {
+        const root = await this.getRootTopic(f.quiz.topicId);
+
+        return {
+          ...f.quiz,
+          topicTitle: root?.title ?? null,
+        };
+      })
+    );
   }
 
   async createFavoriteQuiz(userId: number, quizId: number) {
