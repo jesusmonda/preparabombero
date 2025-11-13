@@ -7,18 +7,26 @@ export class PdfService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(sort: string): Promise<Pdf[]> {
-    const query: {city?: 'asc', community?: 'asc', name?: 'asc'} = {}
-    if (sort == 'community') {
-      query.community = 'asc';
-    }else if (sort == 'city') {
-      query.city = 'asc';
+    // array de criterios de ordenación
+    const orderBy: any[] = [];
+
+    if (sort === 'community') {
+      orderBy.push({ community: 'asc' });
+    } else if (sort === 'city') {
+      orderBy.push({ city: 'asc' });
     } else {
-      query.name = 'asc';
+      // por defecto: name, luego year
+      orderBy.push({ name: 'asc' }, { year: 'asc' });
     }
-    let response = await this.prisma.pdf.findMany({
-      orderBy: query
+
+    const response = await this.prisma.pdf.findMany({
+      orderBy,
     });
-    response.map(x => x.name = x.name.replace(/\.[^/.]+$/, ""))
+
+    // quitar extensión del nombre si quieres seguir haciéndolo
+    response.forEach((x) => {
+      x.name = x.name.replace(/\.[^.]+$/, '');
+    });
 
     return response;
   }

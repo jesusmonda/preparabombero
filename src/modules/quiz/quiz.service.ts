@@ -199,11 +199,15 @@ export class QuizService {
 
     return Promise.all(
       favorites.map(async (f) => {
-        const root = await this.getRootTopic(f.quiz.topicId);
+        let title = null;
+        if (f.quiz.topicId) {
+          const root = await this.getRootTopic(f.quiz.topicId);
+          title = root?.title ?? null
+        }
 
         return {
           ...f.quiz,
-          topicTitle: root?.title ?? null,
+          topicTitle: title,
         };
       })
     );
