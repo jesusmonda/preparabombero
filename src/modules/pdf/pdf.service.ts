@@ -20,8 +20,6 @@ export class PdfService {
   { year: 'asc' },   // 2019, 2025, ...
   { type: 'asc' },   // (si quieres agrupar por tipo)
   { subtype: 'asc' },
-  { type2: 'asc' },
-  { subtype2: 'asc' },
   { name: 'asc' }    // al final como desempate
   );
     }
