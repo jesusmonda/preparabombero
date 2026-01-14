@@ -29,9 +29,7 @@ model Pdf {
   city      String
   year      String
   type      String?
-  type2      String?
   subtype   String?
-  subtype2   String?
   name      String
   quizzes   Quiz[]
 }

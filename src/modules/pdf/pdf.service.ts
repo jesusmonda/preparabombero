@@ -16,7 +16,14 @@ export class PdfService {
       orderBy.push({ city: 'asc' });
     } else {
       // por defecto: name, luego year
-      orderBy.push({ city: 'asc' }, { type: 'asc' }, { type2: 'asc' }, { year: 'asc' }, { subtype: 'asc' }, { subtype2: 'asc' });
+      orderBy.push(  { city: 'asc' },   // Zamora, ...
+  { year: 'asc' },   // 2019, 2025, ...
+  { type: 'asc' },   // (si quieres agrupar por tipo)
+  { subtype: 'asc' },
+  { type2: 'asc' },
+  { subtype2: 'asc' },
+  { name: 'asc' }    // al final como desempate
+  );
     }
 
     const response = await this.prisma.pdf.findMany({
