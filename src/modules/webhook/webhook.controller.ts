@@ -79,7 +79,7 @@ export class WebhookController {
     }
     if (!(user.subscribed == false && user.subscription_id == null && user.cancellation_pending == false) || user.role == 'ADMIN') {
       Logger.log(`User subscribed`);
-      throw new HttpException('Usuario subscrito', HttpStatus.BAD_REQUEST);
+      // throw new HttpException('Usuario subscrito', HttpStatus.BAD_REQUEST);
     }
 
     Logger.log(`Creating subscription`);

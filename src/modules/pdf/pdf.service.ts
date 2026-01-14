@@ -16,7 +16,7 @@ export class PdfService {
       orderBy.push({ city: 'asc' });
     } else {
       // por defecto: name, luego year
-      orderBy.push({ name: 'asc' }, { year: 'asc' });
+      orderBy.push({ city: 'asc' }, { type: 'asc' }, { type2: 'asc' }, { year: 'asc' }, { subtype: 'asc' }, { subtype2: 'asc' });
     }
 
     const response = await this.prisma.pdf.findMany({
