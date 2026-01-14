@@ -22,16 +22,25 @@ export class PdfService {
     // 🔹 Orden especial por name + año
     if (sort === 'name') {
       response.sort((a, b) => {
-        // quitar el año y la extensión para comparar texto
-        const baseA = a.name.replace(/\s\d{4}(\.[^.]+)?$/, '');
-        const baseB = b.name.replace(/\s\d{4}(\.[^.]+)?$/, '');
+        // 1️⃣ normalizar nombre: quitar extensión y año
+        const normalize = (name: string) =>
+          name
+            .replace(/\.[^.]+$/, '')       // quitar .pdf
+            .replace(/\b\d{4}\b.*$/, '')   // quitar año y lo que venga después
+            .trim();
 
-        const textCompare = baseA.localeCompare(baseB, 'es');
+        const baseA = normalize(a.name);
+        const baseB = normalize(b.name);
+
+        // 2️⃣ comparar texto (ignorando acentos)
+        const textCompare = baseA.localeCompare(baseB, 'es', {
+          sensitivity: 'base',
+        });
         if (textCompare !== 0) return textCompare;
 
-        // si el texto es igual, ordenar por año numérico
-        const yearA = Number(a.name.match(/\d{4}/)?.[0] ?? 0);
-        const yearB = Number(b.name.match(/\d{4}/)?.[0] ?? 0);
+        // 3️⃣ comparar año como número
+        const yearA = Number(a.name.match(/\b\d{4}\b/)?.[0] ?? 0);
+        const yearB = Number(b.name.match(/\b\d{4}\b/)?.[0] ?? 0);
 
         return yearA - yearB;
       });
