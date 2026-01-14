@@ -7,28 +7,37 @@ export class PdfService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(sort: string): Promise<Pdf[]> {
-    // array de criterios de ordenación
     const orderBy: any[] = [];
 
     if (sort === 'community') {
       orderBy.push({ community: 'asc' });
     } else if (sort === 'city') {
       orderBy.push({ city: 'asc' });
-    } else {
-      // por defecto: name, luego year
-      orderBy.push(  { city: 'asc' },   // Zamora, ...
-  { year: 'asc' },   // 2019, 2025, ...
-  { type: 'asc' },   // (si quieres agrupar por tipo)
-  { subtype: 'asc' },
-  { name: 'asc' }    // al final como desempate
-  );
     }
 
     const response = await this.prisma.pdf.findMany({
       orderBy,
     });
 
-    // quitar extensión del nombre si quieres seguir haciéndolo
+    // 🔹 Orden especial por name + año
+    if (sort === 'name') {
+      response.sort((a, b) => {
+        // quitar el año y la extensión para comparar texto
+        const baseA = a.name.replace(/\s\d{4}(\.[^.]+)?$/, '');
+        const baseB = b.name.replace(/\s\d{4}(\.[^.]+)?$/, '');
+
+        const textCompare = baseA.localeCompare(baseB, 'es');
+        if (textCompare !== 0) return textCompare;
+
+        // si el texto es igual, ordenar por año numérico
+        const yearA = Number(a.name.match(/\d{4}/)?.[0] ?? 0);
+        const yearB = Number(b.name.match(/\d{4}/)?.[0] ?? 0);
+
+        return yearA - yearB;
+      });
+    }
+
+    // quitar extensión del nombre (como ya hacías)
     response.forEach((x) => {
       x.name = x.name.replace(/\.[^.]+$/, '');
     });
