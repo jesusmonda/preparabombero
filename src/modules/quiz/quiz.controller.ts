@@ -6,6 +6,7 @@ import { QuizOmitResult, QuizAndStatus } from 'src/common/interfaces/quiz.interf
 import { Quiz, User } from '@prisma/client';
 import { OptionalUserGuard } from 'src/common/guards/optional-user.guard';
 import { QuizDto } from './dto/quiz.dto'
+import { QuizStatsDto } from './dto/quiz-stats.dto'
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { UserService } from '../user/user.service';
 import { UserGuard } from 'src/common/guards/user.guard';
@@ -76,6 +77,18 @@ export class QuizController {
     }
 
     return {success, fail, not_answered, quizzes: response}
+  }
+
+  @Post('stats')
+  @UseGuards(UserGuard)
+  async createStats(@Body() quizStatsDto: QuizStatsDto, @Request() request: Request) {
+    const user: User = await this.userService.getUser(request['user'].userId);
+    return await this.quizService.createStats(
+      user.id,
+      quizStatsDto.correct,
+      quizStatsDto.wrong,
+      quizStatsDto.unanswered
+    );
   }
 
   @Get('')
