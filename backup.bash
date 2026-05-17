@@ -1,8 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BACKUP_DIR="${BACKUP_DIR:-$SCRIPT_DIR/database_backup}"
+BACKUP_DIR="${BACKUP_DIR:-/home/ec2-user/database_backup}"
 
 mkdir -p "$BACKUP_DIR"
 
