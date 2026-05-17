@@ -8,6 +8,8 @@ import { User } from '@prisma/client';
 
 @Injectable()
 export class QuizService {
+  private readonly maxNumberOfQuestions = 200;
+
   constructor(
     private readonly userService: UserService,
     private prisma: PrismaService
@@ -40,8 +42,9 @@ export class QuizService {
     return Array.from(new Set([...parentIds, ...allChildrenIds]));
   }
 
-  async getQuizzesFromTopicIds(userId: number, value: number[] | number, type: "LIST" | "EXAM_PDF" | "EXAM_TOPIC", order: "DESC" | "RANDOM") : Promise<QuizOmitResult[]>{
+  async getQuizzesFromTopicIds(userId: number, value: number[] | number, type: "LIST" | "EXAM_PDF" | "EXAM_TOPIC", order: "DESC" | "RANDOM", numberOfQuestions = 0) : Promise<QuizOmitResult[]>{
     let searchQuery : object;
+    const requestedNumberOfQuestions = Math.min(numberOfQuestions, this.maxNumberOfQuestions);
     
     let user: User;
     let subscribed;
@@ -101,7 +104,9 @@ export class QuizService {
   
     let quizs: QuizOmitResult[] = await this.prisma.quiz.findMany(query);
     if (order === "RANDOM") quizs = quizs.sort(function(){ return 0.5 - Math.random() });
-    if (type == "EXAM_TOPIC") quizs = (!subscribed) ? quizs.slice(0, 20) : quizs.slice(0, 100)
+    if (type == "EXAM_TOPIC") {
+      quizs = quizs.slice(0, subscribed ? requestedNumberOfQuestions : 20);
+    }
     return quizs;
   }
 

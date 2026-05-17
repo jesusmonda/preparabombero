@@ -26,7 +26,7 @@ export class QuizController {
         throw new UnauthorizedException();
       }
 
-      let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, generateQuizDto.topicIds, "EXAM_TOPIC", "RANDOM");
+      let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, generateQuizDto.topicIds, "EXAM_TOPIC", "RANDOM", generateQuizDto.numberOfQuestions);
       return response;
     } else if (generateQuizDto.pdfId) {
       let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(undefined, generateQuizDto.pdfId, "EXAM_PDF", "RANDOM");
