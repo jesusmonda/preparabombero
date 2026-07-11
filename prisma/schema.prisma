@@ -44,6 +44,7 @@ model Ip {
 model Topic {
   id            Int      @id @default(autoincrement())
   title         String
+  url           String?
   categoryTitle String?
   parentId      Int?
   created_at    DateTime @default(now())

@@ -68,6 +68,7 @@ export class TopicController {
       return {
         id: topic.id,
         title: topic.title,
+        url: topic.url,
         categoryTitle: topic.categoryTitle || null,
         parentId: topic.parentId,
         expanded: !!topic.categoryTitle,
