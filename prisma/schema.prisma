@@ -8,23 +8,29 @@ datasource db {
 }
 
 model User {
-  id                   Int        @id @default(autoincrement())
-  email                String     @unique
+  id                   Int      @id @default(autoincrement())
+  email                String   @unique
   name                 String
   surname              String
   password             String
-  role                 UserRole   @default(USER)
-  subscribed           Boolean    @default(false)
+  role                 UserRole @default(USER)
+  subscribed           Boolean  @default(false)
   subscription_id      String?
-  cancellation_pending Boolean    @default(false)
-  token                String     @default(uuid())
-  ips                  Ip[]
-  quizStats            QuizStat[]
-  quizFavorite         QuizFavorite[]
+  cancellation_pending Boolean  @default(false)
+  token                String   @default(uuid())
+
+  studyPlanId       Int?
+  examEstimatedDate DateTime?
+
+  studyPlan         StudyPlan?         @relation(fields: [studyPlanId], references: [id], onDelete: SetNull)
+  ips               Ip[]
+  quizStats         QuizStat[]
+  quizFavorite      QuizFavorite[]
+  studyPlanSessions StudyPlanSession[]
 }
 
 model Pdf {
-  id        Int    @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   community String?
   city      String
   year      String
@@ -48,10 +54,12 @@ model Topic {
   categoryTitle String?
   parentId      Int?
   created_at    DateTime @default(now())
-  quizzes       Quiz[]
-  parent        Topic?   @relation("Topics", fields: [parentId], references: [id], onDelete: Cascade)
-  topics        Topic[]  @relation("Topics")
   order         Int
+
+  quizzes         Quiz[]
+  parent          Topic?           @relation("Topics", fields: [parentId], references: [id], onDelete: Cascade)
+  topics          Topic[]          @relation("Topics")
+  studyPlanTopics StudyPlanTopic[]
 }
 
 model Quiz {
@@ -62,29 +70,26 @@ model Quiz {
   option3       String
   option4       String
   result        String
-  /// TODO Eliminar ?
   topicId       Int?
-  /// TODO Eliminar ?
   justification String?
   created_at    DateTime @default(now())
-  /// TODO Eliminar campo
   pdf_name      String?
-  topic         Topic?   @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  reports       Report[]
-  // Eliminar default 0 cuando esten los pdf en prod.
   pdfId         Int      @default(0)
-  pdf           Pdf      @relation(fields: [pdfId], references: [id], onDelete: Restrict)
 
-  quizzes_favorites   QuizFavorite[]
+  topic             Topic?          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  pdf               Pdf             @relation(fields: [pdfId], references: [id], onDelete: Restrict)
+  reports           Report[]
+  quizzes_favorites QuizFavorite[]
+  studyPlanQuizzes  StudyPlanQuiz[]
 }
 
 model QuizFavorite {
-  id            Int      @id @default(autoincrement())
-  userId        Int
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     Int @id @default(autoincrement())
+  userId Int
+  quizId Int
 
-  quizId         Int
-  quiz           Quiz      @relation(fields: [quizId], references: [id], onDelete: Restrict)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Restrict)
 }
 
 model QuizStat {
@@ -94,7 +99,76 @@ model QuizStat {
   fail         Int
   not_answered Int
   created_at   DateTime @default(now())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StudyPlan {
+  id        Int    @id @default(autoincrement())
+  community String
+  city      String
+  type      String
+
+  users             User[]
+  studyPlanTopics   StudyPlanTopic[]
+  studyPlanSessions StudyPlanSession[]
+
+  @@index([community, city, type])
+}
+
+enum StudyPlanTopicType {
+  ESPECIFICO
+  LEGISLACION
+  TERRITORIAL
+}
+
+model StudyPlanTopic {
+  id          Int                @id @default(autoincrement())
+  studyPlanId Int
+  topicId     Int
+  type        StudyPlanTopicType
+
+  studyPlan StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+  topic     Topic     @relation(fields: [topicId], references: [id], onDelete: Restrict)
+
+  @@unique([studyPlanId, topicId, type])
+  @@index([studyPlanId, type])
+}
+
+model StudyPlanSession {
+  id                       Int                    @id @default(autoincrement())
+  studyPlanId              Int
+  userId                   Int
+  topicIds                 Int[]
+  date                     DateTime
+  type                     StudyPlanSessionType
+  percentage               Float?
+
+  studyPlan StudyPlan       @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizzes   StudyPlanQuiz[]
+
+  @@unique([userId, studyPlanId, date])
+  @@index([userId, date])
+}
+
+model StudyPlanQuiz {
+  id                 Int     @id @default(autoincrement())
+  studyPlanSessionId Int
+  quizId             Int
+  optionSelected     String?
+
+  studyPlanSession StudyPlanSession @relation(fields: [studyPlanSessionId], references: [id], onDelete: Cascade)
+  quiz             Quiz             @relation(fields: [quizId], references: [id], onDelete: Restrict)
+
+  @@unique([studyPlanSessionId, quizId])
+  @@index([quizId])
+}
+
+enum StudyPlanSessionType {
+  NORMAL
+  SIMULACRO
+  SPRINT
 }
 
 model Report {

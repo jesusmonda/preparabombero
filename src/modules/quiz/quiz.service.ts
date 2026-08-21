@@ -12,69 +12,78 @@ export class QuizService {
 
   constructor(
     private readonly userService: UserService,
-    private prisma: PrismaService
+    private prisma: PrismaService,
   ) {}
 
   async getAllChildren(parentIds: number[]): Promise<number[]> {
     const children = await this.prisma.topic.findMany({
-        where: {
-            parentId: {
-                in: parentIds,
-            },
+      where: {
+        parentId: {
+          in: parentIds,
         },
-        select: {
-            id: true, // Solo selecciona el ID
-        },
+      },
+      select: {
+        id: true, // Solo selecciona el ID
+      },
     });
 
     // Almacenar todos los IDs encontrados
-    const allChildrenIds = children.map(child => child.id);
+    const allChildrenIds = children.map((child) => child.id);
 
     // Obtener los IDs de los hijos encontrados para la próxima iteración
-    const childIds = children.map(child => child.id);
+    const childIds = children.map((child) => child.id);
 
     // Si hay nuevos hijos, llamar recursivamente
     if (childIds.length > 0) {
-        const childDescendantIds = await this.getAllChildren(childIds);
-        allChildrenIds.push(...childDescendantIds);
+      const childDescendantIds = await this.getAllChildren(childIds);
+      allChildrenIds.push(...childDescendantIds);
     }
 
     return Array.from(new Set([...parentIds, ...allChildrenIds]));
   }
 
-  async getQuizzesFromTopicIds(userId: number, value: number[] | number, type: "LIST" | "EXAM_PDF" | "EXAM_TOPIC", order: "DESC" | "RANDOM", numberOfQuestions = 0) : Promise<QuizOmitResult[]>{
-    let searchQuery : object;
-    const requestedNumberOfQuestions = Math.min(numberOfQuestions, this.maxNumberOfQuestions);
-    
+  async getQuizzesFromTopicIds(
+    userId: number,
+    value: number[] | number,
+    type: 'LIST' | 'EXAM_PDF' | 'EXAM_TOPIC',
+    order: 'DESC' | 'RANDOM',
+    numberOfQuestions = 0,
+  ): Promise<QuizOmitResult[]> {
+    let searchQuery: object;
+    const requestedNumberOfQuestions = Math.min(
+      numberOfQuestions,
+      this.maxNumberOfQuestions,
+    );
+
     let user: User;
     let subscribed;
-  
-    if (type == "EXAM_TOPIC") {
+
+    if (type == 'EXAM_TOPIC') {
       user = await this.userService.getUser(userId);
-      subscribed = (user.subscribed == true && user.subscription_id != null);
-      const topicIds = (!subscribed) ? [662] : [value].flat();
+      subscribed = user.subscribed == true && user.subscription_id != null;
+      const topicIds = !subscribed ? [662] : [value].flat();
 
       searchQuery = {
         topicId: {
-          in: await this.getAllChildren(topicIds)
-        }
-      }
+          in: await this.getAllChildren(topicIds),
+        },
+      };
     }
 
-    if (type == "LIST") {
+    if (type == 'LIST') {
       const topicIds = [value].flat();
 
       searchQuery = {
         topicId: {
-          in: await this.getAllChildren(topicIds)
-        }
-      }
+          in: await this.getAllChildren(topicIds),
+        },
+      };
     }
 
-    if (type == "EXAM_PDF") {
+    if (type == 'EXAM_PDF') {
       searchQuery = {
-        pdfId: value
-      }
+        pdfId: value,
+      };
     }
 
     const query: any = {
@@ -88,80 +97,140 @@ export class QuizService {
         result: false,
         topicId: true,
         justification: true,
-        created_at: true
+        created_at: true,
       },
       where: {
-        ...searchQuery
-      }
-    }
-    if (order === "DESC") {
+        ...searchQuery,
+      },
+    };
+    if (order === 'DESC') {
       query.orderBy = [
         {
           created_at: 'desc',
         },
-      ]
+      ];
     }
-  
+
     let quizs: QuizOmitResult[] = await this.prisma.quiz.findMany(query);
-    if (order === "RANDOM") quizs = quizs.sort(function(){ return 0.5 - Math.random() });
-    if (type == "EXAM_TOPIC") {
+    if (order === 'RANDOM')
+      quizs = quizs.sort(function () {
+        return 0.5 - Math.random();
+      });
+    if (type == 'EXAM_TOPIC') {
       quizs = quizs.slice(0, subscribed ? requestedNumberOfQuestions : 20);
     }
     return quizs;
   }
 
-  async findQuiz(quizId: number) : Promise<Quiz>{
+  async findQuiz(quizId: number): Promise<Quiz> {
     let reponse: Quiz = await this.prisma.quiz.findUnique({
       where: {
-        id: Number(quizId)
-      }
+        id: Number(quizId),
+      },
     });
-    return reponse
+    return reponse;
   }
 
-  async update(id: number, quizDto: QuizDto) : Promise<Quiz> {
+  async update(id: number, quizDto: QuizDto): Promise<Quiz> {
     let reponse: Quiz = await this.prisma.quiz.update({
       where: {
-        id: Number(id)
+        id: Number(id),
       },
-      data: quizDto
+      data: quizDto,
     });
-    return reponse
+    return reponse;
   }
-  async create(quizDto: QuizDto) : Promise<Quiz> {
+  async create(quizDto: QuizDto): Promise<Quiz> {
     let reponse: Quiz = await this.prisma.quiz.create({
-      data: quizDto
+      data: quizDto,
     });
-    return reponse
+    return reponse;
   }
 
-  async delete(id: number) : Promise<Quiz> {
+  async delete(id: number): Promise<Quiz> {
     let reponse: Quiz = await this.prisma.quiz.delete({
       where: {
-        id: Number(id)
-      }
+        id: Number(id),
+      },
     });
-    return reponse
+    return reponse;
   }
 
-  async createStats(userId: number, success: number, fail: number, not_answered: number) : Promise<QuizStat> {
-    userId = Number(userId)
-    success = Number(success)
-    fail = Number(fail)
-    not_answered = Number(not_answered)
+  async createStats(
+    userId: number,
+    success: number,
+    fail: number,
+    not_answered: number,
+  ): Promise<QuizStat> {
+    userId = Number(userId);
+    success = Number(success);
+    fail = Number(fail);
+    not_answered = Number(not_answered);
 
     let response: QuizStat = await this.prisma.quizStat.create({
       data: {
         userId,
         success,
         fail,
-        not_answered
-      }
+        not_answered,
+      },
     });
-    return response
+    return response;
   }
 
-  async getRootTopic(topicId: number): Promise<{ id: number; title: string } | null> {
+  async completeStudyPlanSession(userId, sessionId, quizzes, percentage) {
+    const session = await this.prisma.studyPlanSession.findFirst({
+      where: { id: sessionId, userId },
+      select: { id: true, date: true },
+    });
+
+    if (!session) {
+      throw new HttpException(
+        'Sesión de estudio no encontrada',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sessionDate = new Date(session.date);
+    sessionDate.setHours(0, 0, 0, 0);
+
+    if (sessionDate.getTime() !== today.getTime()) {
+      throw new HttpException(
+        'Solo se puede realizar el check de la sesión correspondiente a hoy',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const quiz of quizzes) {
+        const updated = await tx.studyPlanQuiz.updateMany({
+          where: {
+            studyPlanSessionId: sessionId,
+            quizId: quiz.quizId,
+          },
+          data: { optionSelected: quiz.optionSelected ?? null },
+        });
+
+        if (!updated.count) {
+          throw new HttpException(
+            `El quiz ${quiz.quizId} no pertenece a la sesión`,
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+      }
+
+      await tx.studyPlanSession.update({
+        where: { id: sessionId },
+        data: { percentage },
+      });
+    });
+  }
+
+  async getRootTopic(
+    topicId: number,
+  ): Promise<{ id: number; title: string } | null> {
     let current = await this.prisma.topic.findUnique({
       where: { id: topicId },
       select: { id: true, title: true, parentId: true },
@@ -179,7 +248,7 @@ export class QuizService {
     return { id: current.id, title: current.title };
   }
 
-  async getFavoriteQuiz(userId: number) : Promise<any[]>{
+  async getFavoriteQuiz(userId: number): Promise<any[]> {
     const favorites = await this.prisma.quizFavorite.findMany({
       where: {
         userId: Number(userId),
@@ -196,7 +265,7 @@ export class QuizService {
             topicId: true,
             justification: true,
             created_at: true,
-            pdfId: true
+            pdfId: true,
           },
         },
       },
@@ -207,14 +276,14 @@ export class QuizService {
         let title = null;
         if (f.quiz.topicId) {
           const root = await this.getRootTopic(f.quiz.topicId);
-          title = root?.title ?? null
+          title = root?.title ?? null;
         }
 
         return {
           ...f.quiz,
           topicTitle: title,
         };
-      })
+      }),
     );
   }
 
@@ -224,7 +293,10 @@ export class QuizService {
     });
 
     if (favorite) {
-      throw new HttpException('Pregunta ya en favoritos', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'Pregunta ya en favoritos',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     return this.prisma.quizFavorite.create({
@@ -245,6 +317,9 @@ export class QuizService {
         where: { id: favorite.id },
       });
     }
-    throw new HttpException('Pregunta no está en favoritos', HttpStatus.BAD_REQUEST);
+    throw new HttpException(
+      'Pregunta no está en favoritos',
+      HttpStatus.BAD_REQUEST,
+    );
   }
 }

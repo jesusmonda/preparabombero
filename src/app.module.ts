@@ -20,6 +20,7 @@ import { UserModule } from './modules/user/user.module';
 import { WebhookModule } from './modules/webhook/webhook.module';
 import { ConfigModule } from '@nestjs/config';
 import { PdfModule } from './modules/pdf/pdf.module';
+import { StudyModule } from './modules/study/study.module';
 
 @Module({
   imports: [
@@ -47,7 +48,8 @@ import { PdfModule } from './modules/pdf/pdf.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    PdfModule
+    PdfModule,
+    StudyModule,
   ],
   controllers: [AppController],
   providers: [

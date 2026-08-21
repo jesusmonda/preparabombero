@@ -6,7 +6,6 @@ import Stripe from 'stripe';
 
 @Injectable()
 export class UserService {
-
   stripe: Stripe;
 
   constructor(private prisma: PrismaService) {
@@ -24,26 +23,29 @@ export class UserService {
         },
       ],
       after_completion: {
-        type: "redirect",
+        type: 'redirect',
         redirect: {
-          url: process.env.ENVIRONMENT == "prod" ? `${origin}/profile` : "http://localhost:4200/profile"
-        }
+          url:
+            process.env.ENVIRONMENT == 'prod'
+              ? `${origin}/profile`
+              : 'http://localhost:4200/profile',
+        },
       },
       allow_promotion_codes: false,
-      billing_address_collection: "auto",
-      currency: "EUR",
+      billing_address_collection: 'auto',
+      currency: 'EUR',
       subscription_data: {
         metadata: {
-          userId: userId
-        }
+          userId: userId,
+        },
       },
       restrictions: {
         completed_sessions: {
-          limit: 1
-        }
-      }
+          limit: 1,
+        },
+      },
     });
-    return {url: subscription_data.url}
+    return { url: subscription_data.url };
   }
 
   async getUser(userId: number | undefined): Promise<User> {
@@ -52,15 +54,21 @@ export class UserService {
 
       return await this.prisma.user.findUnique({
         where: {
-          id: userId
-        }
+          id: userId,
+        },
+        include: {
+          studyPlan: true,
+        },
       });
     }
   }
 
-  async deleteSubscription(subscriptionId: string, userId: number): Promise<UserNotSensitive> {
+  async deleteSubscription(
+    subscriptionId: string,
+    userId: number,
+  ): Promise<UserNotSensitive> {
     await this.stripe.subscriptions.update(subscriptionId, {
-      cancel_at_period_end: true
+      cancel_at_period_end: true,
     });
 
     return await this.prisma.user.update({
@@ -70,14 +78,14 @@ export class UserService {
         name: true,
         surname: true,
         subscribed: true,
-        cancellation_pending: true
+        cancellation_pending: true,
       },
       where: {
-        id: userId
+        id: userId,
       },
       data: {
-        cancellation_pending: true
-      }
+        cancellation_pending: true,
+      },
     });
   }
 
@@ -88,13 +96,13 @@ export class UserService {
       skip: 0,
       take: 6,
       where: {
-        userId: userId
+        userId: userId,
       },
       orderBy: [
         {
           created_at: 'desc',
         },
-      ]
+      ],
     });
   }
 }

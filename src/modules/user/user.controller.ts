@@ -44,6 +44,8 @@ export class UserController {
     delete user.password;
     delete user.role;
     delete user.subscription_id;
+    delete user.token;
+    delete user.studyPlanId;
     return user;
   }
 

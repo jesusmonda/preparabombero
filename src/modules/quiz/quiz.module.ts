@@ -8,5 +8,6 @@ import { UserService } from '../user/user.service';
   imports: [],
   controllers: [QuizController],
   providers: [QuizService, PrismaService, UserService],
+  exports: [QuizService],
 })
 export class QuizModule {}

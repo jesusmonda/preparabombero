@@ -1,35 +1,73 @@
-import { Controller, Request, BadRequestException, Put, Query, Get, Delete, HttpException, HttpStatus, Param, Post, Body, UseGuards, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import {
+  Controller,
+  Request,
+  BadRequestException,
+  Put,
+  Query,
+  Get,
+  Delete,
+  HttpException,
+  HttpStatus,
+  Param,
+  Post,
+  Body,
+  UseGuards,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { QuizService } from './quiz.service';
-import { GenerateQuizDto } from './dto/generate-quiz.dto'
-import { CheckQuizzesDto } from './dto/check-quizzes.dto'
-import { QuizOmitResult, QuizAndStatus } from 'src/common/interfaces/quiz.interface';
+import { GenerateQuizDto } from './dto/generate-quiz.dto';
+import { CheckQuizzesDto } from './dto/check-quizzes.dto';
+import {
+  QuizOmitResult,
+  QuizAndStatus,
+} from 'src/common/interfaces/quiz.interface';
 import { Quiz, User } from '@prisma/client';
 import { OptionalUserGuard } from 'src/common/guards/optional-user.guard';
-import { QuizDto } from './dto/quiz.dto'
-import { QuizStatsDto } from './dto/quiz-stats.dto'
+import { QuizDto } from './dto/quiz.dto';
+import { QuizStatsDto } from './dto/quiz-stats.dto';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { UserService } from '../user/user.service';
 import { UserGuard } from 'src/common/guards/user.guard';
 
 @Controller('quiz')
 export class QuizController {
-  constructor(private readonly quizService: QuizService, private readonly userService: UserService) {}
+  constructor(
+    private readonly quizService: QuizService,
+    private readonly userService: UserService,
+  ) {}
 
   @UseGuards(OptionalUserGuard)
   @Post('generate')
-  async generateQuizTopic(@Body() generateQuizDto: GenerateQuizDto, @Request() request: Request) {
-
+  async generateQuizTopic(
+    @Body() generateQuizDto: GenerateQuizDto,
+    @Request() request: Request,
+  ) {
     if (generateQuizDto.topicIds && request['user']) {
       const user: User = await this.userService.getUser(request['user'].userId);
-      const subscribed = (user.subscribed == true && user.subscription_id != null);
+      const subscribed =
+        user.subscribed == true && user.subscription_id != null;
       if (!subscribed) {
         throw new UnauthorizedException();
       }
 
-      let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, generateQuizDto.topicIds, "EXAM_TOPIC", "RANDOM", generateQuizDto.numberOfQuestions);
+      let response: QuizOmitResult[] =
+        await this.quizService.getQuizzesFromTopicIds(
+          user.id,
+          generateQuizDto.topicIds,
+          'EXAM_TOPIC',
+          'RANDOM',
+          generateQuizDto.numberOfQuestions,
+        );
       return response;
     } else if (generateQuizDto.pdfId) {
-      let response: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(undefined, generateQuizDto.pdfId, "EXAM_PDF", "RANDOM");
+      let response: QuizOmitResult[] =
+        await this.quizService.getQuizzesFromTopicIds(
+          undefined,
+          generateQuizDto.pdfId,
+          'EXAM_PDF',
+          'RANDOM',
+        );
       return response;
     } else {
       throw new UnauthorizedException();
@@ -38,75 +76,108 @@ export class QuizController {
 
   @UseGuards(OptionalUserGuard)
   @Post('check')
-  async checkQuiz(@Body() checkQuizzesDto: CheckQuizzesDto, @Request() request: Request) {
+  async checkQuiz(
+    @Body() checkQuizzesDto: CheckQuizzesDto,
+    @Request() request: Request,
+  ) {
     let fail: number = 0;
     let success: number = 0;
     let not_answered: number = 0;
     let response: QuizAndStatus[] = [];
 
-    const promises = checkQuizzesDto.quizzes.map(async x => {
-      let quiz: Quiz = await this.quizService.findQuiz(x.quizId)
+    const promises = checkQuizzesDto.quizzes.map(async (x) => {
+      let quiz: Quiz = await this.quizService.findQuiz(x.quizId);
       let status;
       if (quiz.result == x.optionSelected) {
         success++;
-        status = "success"
-      }else if (x.optionSelected == null) {
+        status = 'success';
+      } else if (x.optionSelected == null) {
         not_answered++;
-        status = "not_answered"
-      } else{
+        status = 'not_answered';
+      } else {
         fail++;
-        status = "fail"
-      };
-      return {... quiz, status}
+        status = 'fail';
+      }
+      return { ...quiz, status };
     });
     response = await Promise.all(promises);
 
-    if (request['user']){
+    if (request['user']) {
       const user: User = await this.userService.getUser(request['user'].userId);
-      const subscribed = (user.subscribed == true && user.subscription_id != null);
+      const subscribed =
+        user.subscribed == true && user.subscription_id != null;
 
-      if (checkQuizzesDto.type == "EXAM") {
-        await this.quizService.createStats(user.id, success, fail, not_answered);
+      if (checkQuizzesDto.studyPlanSessionId) {
+        const percentage = Number(
+          ((success / checkQuizzesDto.quizzes.length) * 100).toFixed(2),
+        );
+
+        await this.quizService.completeStudyPlanSession(
+          user.id,
+          checkQuizzesDto.studyPlanSessionId,
+          checkQuizzesDto.quizzes,
+          percentage,
+        );
+      }
+
+      if (checkQuizzesDto.type == 'EXAM') {
+        await this.quizService.createStats(
+          user.id,
+          success,
+          fail,
+          not_answered,
+        );
       }
 
       if (!subscribed) {
-        response.map(x => x.justification = null);
+        response.map((x) => (x.justification = null));
       }
     } else {
-      response.map(x => x.justification = null);
+      response.map((x) => (x.justification = null));
     }
 
-    return {success, fail, not_answered, quizzes: response}
+    return { success, fail, not_answered, quizzes: response };
   }
 
   @Post('stats')
   @UseGuards(UserGuard)
-  async createStats(@Body() quizStatsDto: QuizStatsDto, @Request() request: Request) {
+  async createStats(
+    @Body() quizStatsDto: QuizStatsDto,
+    @Request() request: Request,
+  ) {
     const user: User = await this.userService.getUser(request['user'].userId);
     return await this.quizService.createStats(
       user.id,
       quizStatsDto.correct,
       quizStatsDto.wrong,
-      quizStatsDto.unanswered
+      quizStatsDto.unanswered,
     );
   }
 
   @Get('')
   @UseGuards(AdminGuard)
-  async getByTopicId(@Query('topicId') topicId: string, @Request() request: Request) {
+  async getByTopicId(
+    @Query('topicId') topicId: string,
+    @Request() request: Request,
+  ) {
     if (!topicId || topicId == '') {
       throw new HttpException('TopicId incorrecto', HttpStatus.BAD_REQUEST);
     }
-    const topicIdNumber: number = Number(topicId)
+    const topicIdNumber: number = Number(topicId);
     if (isNaN(topicIdNumber)) {
       throw new HttpException('TopicId incorrecto', HttpStatus.BAD_REQUEST);
     }
     const user: User = await this.userService.getUser(request['user'].userId);
 
-    let quiz: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(user.id, topicIdNumber, "LIST", "DESC")
+    let quiz: QuizOmitResult[] = await this.quizService.getQuizzesFromTopicIds(
+      user.id,
+      topicIdNumber,
+      'LIST',
+      'DESC',
+    );
     return quiz;
   }
-  
+
   @Post('')
   @UseGuards(AdminGuard)
   async create(@Body() quizDto: QuizDto) {
@@ -119,7 +190,7 @@ export class QuizController {
     if (!quizId || quizId == '') {
       throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
     }
-    const quizIdNumber: number = Number(quizId)
+    const quizIdNumber: number = Number(quizId);
     if (isNaN(quizIdNumber)) {
       throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
     }
@@ -138,11 +209,11 @@ export class QuizController {
     if (!quizId || quizId == '') {
       throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
     }
-    const quizIdNumber: number = Number(quizId)
+    const quizIdNumber: number = Number(quizId);
     if (isNaN(quizIdNumber)) {
       throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
     }
-  
+
     let quiz: Quiz = await this.quizService.findQuiz(quizIdNumber);
     if (quiz == null) {
       throw new HttpException('Pregunta no encontrada', HttpStatus.NOT_FOUND);
@@ -156,18 +227,23 @@ export class QuizController {
   @UseGuards(UserGuard)
   async getFavoriteQuiz(@Request() request: Request) {
     const user: User = await this.userService.getUser(request['user'].userId);
-    const subscribed = (user.subscribed == true && user.subscription_id != null);
+    const subscribed = user.subscribed == true && user.subscription_id != null;
     if (!subscribed) {
       throw new UnauthorizedException();
     }
 
-    let quiz: QuizOmitResult[] = await this.quizService.getFavoriteQuiz(user.id)
+    let quiz: QuizOmitResult[] = await this.quizService.getFavoriteQuiz(
+      user.id,
+    );
     return quiz;
   }
-  
+
   @Post('favorite')
   @UseGuards(UserGuard)
-  async createFavoriteQuiz(@Body() quiz: {quizId: number}, @Request() request: Request) {
+  async createFavoriteQuiz(
+    @Body() quiz: { quizId: number },
+    @Request() request: Request,
+  ) {
     const user: User = await this.userService.getUser(request['user'].userId);
 
     return await this.quizService.createFavoriteQuiz(user.id, quiz.quizId);
@@ -175,15 +251,18 @@ export class QuizController {
 
   @Delete(':id/favorite')
   @UseGuards(UserGuard)
-  async deleteFavoriteQuiz(@Param('id') quizId: string, @Request() request: Request) {
+  async deleteFavoriteQuiz(
+    @Param('id') quizId: string,
+    @Request() request: Request,
+  ) {
     if (!quizId || quizId == '') {
       throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
     }
-    const quizIdNumber: number = Number(quizId)
+    const quizIdNumber: number = Number(quizId);
     if (isNaN(quizIdNumber)) {
       throw new HttpException('quizId incorrecto', HttpStatus.BAD_REQUEST);
     }
-  
+
     let quiz: Quiz = await this.quizService.findQuiz(quizIdNumber);
     if (quiz == null) {
       throw new HttpException('Pregunta no encontrada', HttpStatus.NOT_FOUND);
