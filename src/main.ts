@@ -4,6 +4,8 @@ import { AppModule } from './app.module';
 import { I18nValidationExceptionFilter, I18nValidationPipe } from 'nestjs-i18n';
 import * as bodyParser from 'body-parser';
 
+process.env.TZ = 'Europe/Madrid';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
