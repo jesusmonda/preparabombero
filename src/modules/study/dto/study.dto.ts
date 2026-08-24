@@ -13,3 +13,8 @@ export class CreateStudyDto {
   @IsNumber({}, { message: 'validation.NOT_NUMBER' })
   estimateExamDate: number;
 }
+
+export class UpdateStudyDto {
+  @IsNumber({}, { message: 'validation.NOT_NUMBER' })
+  estimateExamDate: number;
+}

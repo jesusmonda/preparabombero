@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { StudyPlanSessionType, StudyPlanTopicType } from '@prisma/client';
 import { PrismaService } from 'src/common/services/database.service';
 import { QuizService } from '../quiz/quiz.service';
-import { CreateStudyDto } from './dto/study.dto';
+import { CreateStudyDto, UpdateStudyDto } from './dto/study.dto';
 
 const DAY = 24 * 60 * 60 * 1000;
 const THEMATIC_QUESTIONS = 25;
@@ -186,24 +186,26 @@ export class StudyService {
         `estimateExamDate=${dto.estimateExamDate}`,
     );
 
-    const examDate = new Date(dto.estimateExamDate);
-    const today = this.day(new Date());
-    const lastDay = this.day(examDate);
-
-    this.logger.log(
-      `Fechas del plan: inicio=${today.toISOString()}, ` +
-        `examen=${examDate.toISOString()}, último día=${lastDay.toISOString()}`,
-    );
+    const examDateValue = new Date(dto.estimateExamDate);
 
     if (
       !Number.isFinite(dto.estimateExamDate) ||
-      Number.isNaN(examDate.getTime())
+      Number.isNaN(examDateValue.getTime())
     ) {
       throw new HttpException(
         'estimateExamDate no es válida',
         HttpStatus.BAD_REQUEST,
       );
     }
+
+    const examDate = this.day(examDateValue);
+    const today = this.day(new Date());
+    const lastDay = examDate;
+
+    this.logger.log(
+      `Fechas del plan: inicio=${today.toISOString()}, ` +
+        `examen=${examDate.toISOString()}, último día=${lastDay.toISOString()}`,
+    );
 
     if (lastDay <= today) {
       throw new HttpException(
@@ -314,56 +316,13 @@ export class StudyService {
           },
         });
 
-        let sessionsCreated = 0;
-        let quizzesCreated = 0;
-
-        for (const session of sessions) {
-          this.logger.log(
-            `Procesando sesión: fecha=${session.date.toISOString()}, ` +
-              `tipo=${session.type}, topics=${session.topicIds.join(',') || 'ninguno'}`,
-          );
-          const existing = await tx.studyPlanSession.findUnique({
-            where: {
-              userId_studyPlanId_date: {
-                userId,
-                studyPlanId: studyPlan.id,
-                date: session.date,
-              },
-            },
-            select: { id: true },
-          });
-
-          if (existing) {
-            this.logger.log(`Sesión ya existente: id=${existing.id}`);
-            continue;
-          }
-
-          const quizIds = this.selectQuizIds(session, pools);
-          this.logger.log(
-            `Preguntas seleccionadas: sesión=${session.date.toISOString()}, ` +
-              `total=${quizIds.length}, ids=${quizIds.join(',')}`,
-          );
-
-          await tx.studyPlanSession.create({
-            data: {
-              studyPlanId: studyPlan.id,
-              userId,
-              topicIds: session.topicIds,
-              date: session.date,
-              type: session.type,
-              quizzes: { create: quizIds.map((quizId) => ({ quizId })) },
-            },
-          });
-
-          sessionsCreated += 1;
-          quizzesCreated += quizIds.length;
-          this.logger.log(
-            `Sesión creada: fecha=${session.date.toISOString()}, ` +
-              `sesiones=${sessionsCreated}, quizzes=${quizzesCreated}`,
-          );
-        }
-
-        return { sessionsCreated, quizzesCreated };
+        return this.createPlanSessions(
+          tx,
+          userId,
+          studyPlan.id,
+          sessions,
+          pools,
+        );
       },
       {
         maxWait: 10000,
@@ -375,6 +334,240 @@ export class StudyService {
       `Plan creado: usuario=${userId}, studyPlan=${studyPlan.id}, ` +
         `sesiones=${created.sessionsCreated}, quizzes=${created.quizzesCreated}`,
     );
+  }
+
+  async update(userId, dto: UpdateStudyDto) {
+    this.logger.log(
+      `Actualizando plan: usuario=${userId}, ` +
+        `estimateExamDate=${dto.estimateExamDate}`,
+    );
+
+    const examDateValue = new Date(dto.estimateExamDate);
+
+    if (
+      !Number.isFinite(dto.estimateExamDate) ||
+      Number.isNaN(examDateValue.getTime())
+    ) {
+      throw new HttpException(
+        'estimateExamDate no es válida',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const examDate = this.day(examDateValue);
+    const today = this.day(new Date());
+
+    if (examDate <= today) {
+      throw new HttpException(
+        'La fecha estimada del examen debe ser posterior a hoy',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, studyPlanId: true },
+    });
+
+    if (!user) {
+      throw new HttpException('Usuario no encontrado', HttpStatus.NOT_FOUND);
+    }
+
+    if (!user.studyPlanId) {
+      throw new HttpException(
+        'El usuario no tiene un plan de estudio',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const studyPlan = await this.prisma.studyPlan.findUnique({
+      where: { id: user.studyPlanId },
+      include: {
+        studyPlanTopics: {
+          select: { topicId: true, type: true },
+          orderBy: { id: 'asc' },
+        },
+      },
+    });
+
+    if (!studyPlan) {
+      throw new HttpException(
+        'Plan de estudio no encontrado',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const topics = {
+      specific: studyPlan.studyPlanTopics
+        .filter(({ type }) => type === StudyPlanTopicType.ESPECIFICO)
+        .map(({ topicId }) => topicId),
+      legislation: studyPlan.studyPlanTopics
+        .filter(({ type }) => type === StudyPlanTopicType.LEGISLACION)
+        .map(({ topicId }) => topicId),
+      territorial: studyPlan.studyPlanTopics
+        .filter(({ type }) => type === StudyPlanTopicType.TERRITORIAL)
+        .map(({ topicId }) => topicId),
+    };
+
+    if (!topics.specific.length && !topics.legislation.length) {
+      throw new HttpException(
+        'El plan no tiene temas específicos ni de legislación',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!topics.territorial.length) {
+      throw new HttpException(
+        'El plan no tiene temas territoriales',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const preservedSessions = await this.prisma.studyPlanSession.findMany({
+      where: {
+        userId,
+        studyPlanId: user.studyPlanId,
+        date: { lte: today },
+      },
+      orderBy: { date: 'asc' },
+      select: { date: true, type: true, topicIds: true },
+    });
+
+    const sequence = this.createSequence(topics.specific, topics.legislation);
+    const normalTopicsCount = preservedSessions
+      .filter(({ type }) => type === StudyPlanSessionType.NORMAL)
+      .reduce((total, session) => total + session.topicIds.length, 0);
+    const sequenceIndex = normalTopicsCount % sequence.length;
+    const monday = new Date(today);
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    const weekTopics = this.unique(
+      preservedSessions
+        .filter(
+          ({ date, type }) =>
+            date >= monday && type !== StudyPlanSessionType.SIMULACRO,
+        )
+        .flatMap(({ topicIds }) => topicIds),
+    );
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const sessions = this.createSessions(
+      tomorrow,
+      examDate,
+      sequence,
+      sequenceIndex,
+      weekTopics,
+    );
+
+    const pools = sessions.length
+      ? await this.createQuizPools(
+          [...sequence, ...topics.territorial],
+          sequence,
+          topics.territorial,
+        )
+      : null;
+
+    this.logger.log(
+      `Plan recalculado: usuario=${userId}, studyPlan=${studyPlan.id}, ` +
+        `sesiones conservadas=${preservedSessions.length}, ` +
+        `sesiones futuras nuevas=${sessions.length}, ` +
+        `índice de secuencia=${sequenceIndex}, ` +
+        `examen=${examDate.toISOString()}`,
+    );
+
+    const updated = await this.prisma.$transaction(
+      async (tx) => {
+        const deleted = await tx.studyPlanSession.deleteMany({
+          where: {
+            userId,
+            studyPlanId: studyPlan.id,
+            date: { gt: today },
+          },
+        });
+
+        await tx.user.update({
+          where: { id: userId },
+          data: { examEstimatedDate: examDate },
+        });
+
+        const created = await this.createPlanSessions(
+          tx,
+          userId,
+          studyPlan.id,
+          sessions,
+          pools,
+        );
+
+        return {
+          deletedSessions: deleted.count,
+          ...created,
+        };
+      },
+      {
+        maxWait: 10000,
+        timeout: 120000,
+      },
+    );
+
+    this.logger.log(
+      `Plan actualizado: usuario=${userId}, ` +
+        `sesiones eliminadas=${updated.deletedSessions}, ` +
+        `sesiones creadas=${updated.sessionsCreated}, ` +
+        `quizzes creados=${updated.quizzesCreated}`,
+    );
+  }
+
+  private async createPlanSessions(tx, userId, studyPlanId, sessions, pools) {
+    let sessionsCreated = 0;
+    let quizzesCreated = 0;
+
+    for (const session of sessions) {
+      this.logger.log(
+        `Procesando sesión: fecha=${session.date.toISOString()}, ` +
+          `tipo=${session.type}, topics=${session.topicIds.join(',') || 'ninguno'}`,
+      );
+
+      const existing = await tx.studyPlanSession.findUnique({
+        where: {
+          userId_studyPlanId_date: {
+            userId,
+            studyPlanId,
+            date: session.date,
+          },
+        },
+        select: { id: true },
+      });
+
+      if (existing) {
+        this.logger.log(`Sesión ya existente: id=${existing.id}`);
+        continue;
+      }
+
+      const quizIds = this.selectQuizIds(session, pools);
+      this.logger.log(
+        `Preguntas seleccionadas: sesión=${session.date.toISOString()}, ` +
+          `total=${quizIds.length}, ids=${quizIds.join(',')}`,
+      );
+
+      await tx.studyPlanSession.create({
+        data: {
+          studyPlanId,
+          userId,
+          topicIds: session.topicIds,
+          date: session.date,
+          type: session.type,
+          quizzes: { create: quizIds.map((quizId) => ({ quizId })) },
+        },
+      });
+
+      sessionsCreated += 1;
+      quizzesCreated += quizIds.length;
+      this.logger.log(
+        `Sesión creada: fecha=${session.date.toISOString()}, ` +
+          `sesiones=${sessionsCreated}, quizzes=${quizzesCreated}`,
+      );
+    }
+
+    return { sessionsCreated, quizzesCreated };
   }
 
   async delete(userId) {
@@ -423,8 +616,9 @@ export class StudyService {
 
   private day(date) {
     const result = new Date(date);
-    result.setHours(0, 0, 0, 0);
-    return result;
+    return new Date(
+      Date.UTC(result.getFullYear(), result.getMonth(), result.getDate()),
+    );
   }
 
   private createSequence(specific, legislation) {
@@ -463,10 +657,16 @@ export class StudyService {
     return sequence;
   }
 
-  private createSessions(today, lastDay, sequence) {
+  private createSessions(
+    today,
+    lastDay,
+    sequence,
+    initialSequenceIndex = 0,
+    initialWeekTopics = [],
+  ) {
     const sessions = [];
-    let sequenceIndex = 0;
-    let weekTopics = [];
+    let sequenceIndex = initialSequenceIndex;
+    let weekTopics = this.unique(initialWeekTopics);
 
     for (
       const date = new Date(today);

@@ -8,12 +8,13 @@ import {
   HttpStatus,
   Param,
   Post,
+  Put,
   Request,
   UseGuards,
 } from '@nestjs/common';
 import { UserGuard } from 'src/common/guards/user.guard';
 import { PrismaService } from 'src/common/services/database.service';
-import { CreateStudyDto } from './dto/study.dto';
+import { CreateStudyDto, UpdateStudyDto } from './dto/study.dto';
 import { StudyService } from './study.service';
 
 @Controller('study')
@@ -45,15 +46,20 @@ export class StudyController {
   }
 
   @Post()
-  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(UserGuard)
   async create(@Body() dto: CreateStudyDto, @Request() request: Request) {
     await this.validateSubscription(request['user'].userId);
     return this.studyService.create(request['user'].userId, dto);
   }
 
+  @Put()
+  @UseGuards(UserGuard)
+  async update(@Body() dto: UpdateStudyDto, @Request() request: Request) {
+    await this.validateSubscription(request['user'].userId);
+    return this.studyService.update(request['user'].userId, dto);
+  }
+
   @Delete()
-  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(UserGuard)
   async delete(@Request() request: Request) {
     await this.validateSubscription(request['user'].userId);
