@@ -50,7 +50,7 @@ export class StudyService {
       select: {
         id: true,
         studyPlanId: true,
-        topicIds: true,
+        studyPlanTopicIds: true,
         date: true,
         type: true,
         percentage: true,
@@ -65,22 +65,24 @@ export class StudyService {
         studyPlanId: { in: studyPlanIds },
         type: StudyPlanTopicType.TERRITORIAL,
       },
-      select: { studyPlanId: true, topicId: true },
+      select: { id: true, studyPlanId: true },
     });
     const territorialByPlan = new Map();
 
     for (const topic of territorialTopics) {
       territorialByPlan.set(topic.studyPlanId, [
         ...(territorialByPlan.get(topic.studyPlanId) ?? []),
-        topic.topicId,
+        topic.id,
       ]);
     }
 
     const sessionsWithThematicTopics = sessions.map((session) => ({
       ...session,
-      topicIds: session.topicIds.filter(
-        (topicId) =>
-          !(territorialByPlan.get(session.studyPlanId) ?? []).includes(topicId),
+      studyPlanTopicIds: session.studyPlanTopicIds.filter(
+        (studyPlanTopicId) =>
+          !(territorialByPlan.get(session.studyPlanId) ?? []).includes(
+            studyPlanTopicId,
+          ),
       ),
     }));
 
@@ -89,23 +91,25 @@ export class StudyService {
         studyPlanId: { in: studyPlanIds },
         type: { not: StudyPlanTopicType.TERRITORIAL },
       },
-      select: { studyPlanId: true, topicId: true, topicName: true },
+      select: { studyPlanId: true, id: true, topicName: true },
     });
     const topicNamesByPlan = new Map();
 
     for (const topic of planTopics) {
       const namesByTopic = topicNamesByPlan.get(topic.studyPlanId) ?? new Map();
-      namesByTopic.set(topic.topicId, topic.topicName);
+      namesByTopic.set(topic.id, topic.topicName);
       topicNamesByPlan.set(topic.studyPlanId, namesByTopic);
     }
 
     const today = this.day(new Date());
 
     return sessionsWithThematicTopics.map(
-      ({ studyPlanId, topicIds, ...session }) => ({
+      ({ studyPlanId, studyPlanTopicIds, ...session }) => ({
         ...session,
-        topics: topicIds
-          .map((topicId) => topicNamesByPlan.get(studyPlanId)?.get(topicId))
+        topics: studyPlanTopicIds
+          .map((studyPlanTopicId) =>
+            topicNamesByPlan.get(studyPlanId)?.get(studyPlanTopicId),
+          )
           .filter(Boolean),
         status:
           session.percentage !== null
@@ -132,7 +136,7 @@ export class StudyService {
       where: { id: sessionId, userId },
       select: {
         id: true,
-        topicIds: true,
+        studyPlanTopicIds: true,
         date: true,
         type: true,
         percentage: true,
@@ -231,7 +235,7 @@ export class StudyService {
         },
         include: {
           studyPlanTopics: {
-            select: { topicId: true, type: true },
+            select: { id: true, topicId: true, topicName: true, type: true },
             orderBy: { id: 'asc' },
           },
         },
@@ -266,13 +270,13 @@ export class StudyService {
     const topics = {
       specific: studyPlan.studyPlanTopics
         .filter(({ type }) => type === StudyPlanTopicType.ESPECIFICO)
-        .map(({ topicId }) => topicId),
+        .map(({ id }) => id),
       legislation: studyPlan.studyPlanTopics
         .filter(({ type }) => type === StudyPlanTopicType.LEGISLACION)
-        .map(({ topicId }) => topicId),
+        .map(({ id }) => id),
       territorial: studyPlan.studyPlanTopics
         .filter(({ type }) => type === StudyPlanTopicType.TERRITORIAL)
-        .map(({ topicId }) => topicId),
+        .map(({ id }) => id),
     };
 
     if (!topics.specific.length && !topics.legislation.length) {
@@ -297,7 +301,7 @@ export class StudyService {
 
     const sequence = this.createSequence(topics.specific, topics.legislation);
     const pools = await this.createQuizPools(
-      [...sequence, ...topics.territorial],
+      studyPlan.studyPlanTopics,
       sequence,
       topics.territorial,
     );
@@ -388,7 +392,7 @@ export class StudyService {
       where: { id: user.studyPlanId },
       include: {
         studyPlanTopics: {
-          select: { topicId: true, type: true },
+          select: { id: true, topicId: true, topicName: true, type: true },
           orderBy: { id: 'asc' },
         },
       },
@@ -404,13 +408,13 @@ export class StudyService {
     const topics = {
       specific: studyPlan.studyPlanTopics
         .filter(({ type }) => type === StudyPlanTopicType.ESPECIFICO)
-        .map(({ topicId }) => topicId),
+        .map(({ id }) => id),
       legislation: studyPlan.studyPlanTopics
         .filter(({ type }) => type === StudyPlanTopicType.LEGISLACION)
-        .map(({ topicId }) => topicId),
+        .map(({ id }) => id),
       territorial: studyPlan.studyPlanTopics
         .filter(({ type }) => type === StudyPlanTopicType.TERRITORIAL)
-        .map(({ topicId }) => topicId),
+        .map(({ id }) => id),
     };
 
     if (!topics.specific.length && !topics.legislation.length) {
@@ -434,13 +438,13 @@ export class StudyService {
         date: { lte: today },
       },
       orderBy: { date: 'asc' },
-      select: { date: true, type: true, topicIds: true },
+      select: { date: true, type: true, studyPlanTopicIds: true },
     });
 
     const sequence = this.createSequence(topics.specific, topics.legislation);
     const normalTopicsCount = preservedSessions
       .filter(({ type }) => type === StudyPlanSessionType.NORMAL)
-      .reduce((total, session) => total + session.topicIds.length, 0);
+      .reduce((total, session) => total + session.studyPlanTopicIds.length, 0);
     const sequenceIndex = normalTopicsCount % sequence.length;
     const tomorrow = new Date(today);
     tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
@@ -467,7 +471,7 @@ export class StudyService {
           ({ date, type }) =>
             date >= monday && type !== StudyPlanSessionType.SIMULACRO,
         )
-        .flatMap(({ topicIds }) => topicIds),
+        .flatMap(({ studyPlanTopicIds }) => studyPlanTopicIds),
     );
     const sessions = this.createSessions(
       tomorrow,
@@ -481,7 +485,7 @@ export class StudyService {
 
     const pools = sessions.length
       ? await this.createQuizPools(
-          [...sequence, ...topics.territorial],
+          studyPlan.studyPlanTopics,
           sequence,
           topics.territorial,
         )
@@ -544,7 +548,7 @@ export class StudyService {
     for (const session of sessions) {
       this.logger.log(
         `Procesando sesión: fecha=${session.date.toISOString()}, ` +
-          `tipo=${session.type}, topics=${session.topicIds.join(',') || 'ninguno'}`,
+          `tipo=${session.type}, studyPlanTopics=${session.studyPlanTopicIds.join(',') || 'ninguno'}`,
       );
 
       const existing = await tx.studyPlanSession.findUnique({
@@ -573,7 +577,7 @@ export class StudyService {
         data: {
           studyPlanId,
           userId,
-          topicIds: session.topicIds,
+          studyPlanTopicIds: session.studyPlanTopicIds,
           date: session.date,
           type: session.type,
           quizzes: { create: quizIds.map((quizId) => ({ quizId })) },
@@ -717,7 +721,7 @@ export class StudyService {
         sessions.push({
           date: new Date(date),
           type: StudyPlanSessionType.SIMULACRO,
-          topicIds: simulationTopics,
+          studyPlanTopicIds: simulationTopics,
         });
         continue;
       }
@@ -727,15 +731,15 @@ export class StudyService {
       );
       const count = this.topicsPerDay(daysRemaining);
       const isSprint = !count;
-      let topicIds;
+      let studyPlanTopicIds;
 
       if (isSprint) {
         if (!sprintChunks.length || sprintIndex === 0) {
           sprintChunks = this.createSprintChunks(sequence);
         }
-        topicIds = sprintChunks[sprintIndex];
+        studyPlanTopicIds = sprintChunks[sprintIndex];
       } else {
-        topicIds = this.take(sequence, sequenceIndex, count);
+        studyPlanTopicIds = this.take(sequence, sequenceIndex, count);
       }
 
       if (count) {
@@ -744,21 +748,22 @@ export class StudyService {
       } else {
         this.logger.log(
           `Fecha ${date.toISOString()}: sprint ${sprintIndex + 1}/${sprintParts}, ` +
-            `asignados=${topicIds.join(',')}`,
+            `asignados=${studyPlanTopicIds.join(',')}`,
         );
         sprintIndex = (sprintIndex + 1) % sprintParts;
       }
 
-      weekTopics.push(...topicIds);
+      weekTopics.push(...studyPlanTopicIds);
       this.logger.log(
         `Fecha ${date.toISOString()}: días restantes=${daysRemaining}, ` +
-          `topics=${count || topicIds.length}, tipo=${count ? 'NORMAL' : 'SPRINT'}, ` +
-          `asignados=${topicIds.join(',')}`,
+          `studyPlanTopics=${count || studyPlanTopicIds.length}, ` +
+          `tipo=${count ? 'NORMAL' : 'SPRINT'}, ` +
+          `asignados=${studyPlanTopicIds.join(',')}`,
       );
       sessions.push({
         date: new Date(date),
         type: count ? StudyPlanSessionType.NORMAL : StudyPlanSessionType.SPRINT,
-        topicIds,
+        studyPlanTopicIds,
       });
     }
 
@@ -777,8 +782,8 @@ export class StudyService {
   }
 
   private createRemainingSprintChunks(sequence, completedSessions, parts) {
-    const completedChunks = completedSessions.map(({ topicIds }) =>
-      this.unique(topicIds),
+    const completedChunks = completedSessions.map(({ studyPlanTopicIds }) =>
+      this.unique(studyPlanTopicIds),
     );
     const completedTopicIds = new Set(completedChunks.flat());
     const remainingTopics = this.shuffle(
@@ -857,10 +862,25 @@ export class StudyService {
     );
   }
 
-  private async createQuizPools(roots, thematicRoots, territorialRoots) {
-    const rootIds = this.unique(roots);
+  private async createQuizPools(
+    studyPlanTopics,
+    thematicStudyPlanTopicIds,
+    territorialStudyPlanTopicIds,
+  ) {
+    const topicIdsByStudyPlanTopic = (studyPlanTopicId) =>
+      studyPlanTopics.find(({ id }) => id === studyPlanTopicId)?.topicId ?? [];
+    const studyPlanTopicIds = this.unique([
+      ...thematicStudyPlanTopicIds,
+      ...territorialStudyPlanTopicIds,
+    ]);
+    const rootIds = this.unique(
+      studyPlanTopicIds.flatMap((studyPlanTopicId) =>
+        topicIdsByStudyPlanTopic(studyPlanTopicId),
+      ),
+    );
     this.logger.log(
-      `Creando pools de preguntas para roots=${rootIds.join(',')}`,
+      `Creando pools de preguntas para studyPlanTopics=${studyPlanTopicIds.join(',')}, ` +
+        `roots=${rootIds.join(',')}`,
     );
     const descendants = new Map();
     const allDescendantIds = new Set();
@@ -895,14 +915,32 @@ export class StudyService {
       this.logger.log(`Pool root=${root}: quizzes=${byRoot.get(root).length}`);
     }
 
+    const byStudyPlanTopic = new Map();
+
+    for (const studyPlanTopicId of studyPlanTopicIds) {
+      const topicIds = topicIdsByStudyPlanTopic(studyPlanTopicId);
+      const quizIds = this.unique(
+        topicIds.flatMap((root) => byRoot.get(root) ?? []),
+      );
+      byStudyPlanTopic.set(studyPlanTopicId, quizIds);
+      this.logger.log(
+        `Pool studyPlanTopic=${studyPlanTopicId}: ` +
+          `topicIds=${topicIds.join(',')}, quizzes=${quizIds.length}`,
+      );
+    }
+
     const pools = {
-      byRoot,
-      thematicRoots: this.unique(thematicRoots),
+      byStudyPlanTopic,
+      thematicStudyPlanTopicIds: this.unique(thematicStudyPlanTopicIds),
       thematic: this.unique(
-        thematicRoots.flatMap((root) => byRoot.get(root) ?? []),
+        thematicStudyPlanTopicIds.flatMap(
+          (studyPlanTopicId) => byStudyPlanTopic.get(studyPlanTopicId) ?? [],
+        ),
       ),
       territorial: this.unique(
-        territorialRoots.flatMap((root) => byRoot.get(root) ?? []),
+        territorialStudyPlanTopicIds.flatMap(
+          (studyPlanTopicId) => byStudyPlanTopic.get(studyPlanTopicId) ?? [],
+        ),
       ),
     };
 
@@ -915,16 +953,18 @@ export class StudyService {
   }
 
   private selectQuizIds(session, pools) {
-    const roots =
+    const studyPlanTopicIds =
       session.type === StudyPlanSessionType.SIMULACRO &&
-      !session.topicIds.length
-        ? pools.thematicRoots
-        : session.topicIds;
+      !session.studyPlanTopicIds.length
+        ? pools.thematicStudyPlanTopicIds
+        : session.studyPlanTopicIds;
 
-    const thematicPool = roots.flatMap((root) => pools.byRoot.get(root) ?? []);
+    const thematicPool = studyPlanTopicIds.flatMap(
+      (studyPlanTopicId) => pools.byStudyPlanTopic.get(studyPlanTopicId) ?? [],
+    );
     this.logger.log(
       `Seleccionando preguntas: fecha=${session.date.toISOString()}, ` +
-        `tipo=${session.type}, roots=${roots.join(',') || 'todos'}, ` +
+        `tipo=${session.type}, studyPlanTopics=${studyPlanTopicIds.join(',') || 'todos'}, ` +
         `poolTemático=${thematicPool.length}`,
     );
     const selected = new Set(
