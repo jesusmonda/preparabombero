@@ -84,16 +84,20 @@ export class StudyService {
       ),
     }));
 
-    const topicIds = [
-      ...new Set(
-        sessionsWithThematicTopics.flatMap((session) => session.topicIds),
-      ),
-    ];
-    const topics = await this.prisma.topic.findMany({
-      where: { id: { in: topicIds } },
-      select: { id: true, title: true },
+    const planTopics = await this.prisma.studyPlanTopic.findMany({
+      where: {
+        studyPlanId: { in: studyPlanIds },
+        type: { not: StudyPlanTopicType.TERRITORIAL },
+      },
+      select: { studyPlanId: true, topicId: true, topicName: true },
     });
-    const topicTitles = new Map(topics.map((topic) => [topic.id, topic.title]));
+    const topicNamesByPlan = new Map();
+
+    for (const topic of planTopics) {
+      const namesByTopic = topicNamesByPlan.get(topic.studyPlanId) ?? new Map();
+      namesByTopic.set(topic.topicId, topic.topicName);
+      topicNamesByPlan.set(topic.studyPlanId, namesByTopic);
+    }
 
     const today = this.day(new Date());
 
@@ -101,7 +105,7 @@ export class StudyService {
       ({ studyPlanId, topicIds, ...session }) => ({
         ...session,
         topics: topicIds
-          .map((topicId) => topicTitles.get(topicId))
+          .map((topicId) => topicNamesByPlan.get(studyPlanId)?.get(topicId))
           .filter(Boolean),
         status:
           session.percentage !== null

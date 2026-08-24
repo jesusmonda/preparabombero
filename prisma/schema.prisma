@@ -126,6 +126,7 @@ model StudyPlanTopic {
   id          Int                @id @default(autoincrement())
   studyPlanId Int
   topicId     Int
+  topicName   String
   type        StudyPlanTopicType
 
   studyPlan StudyPlan @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
