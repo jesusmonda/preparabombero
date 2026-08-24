@@ -438,8 +438,25 @@ export class StudyService {
       .filter(({ type }) => type === StudyPlanSessionType.NORMAL)
       .reduce((total, session) => total + session.topicIds.length, 0);
     const sequenceIndex = normalTopicsCount % sequence.length;
+    const tomorrow = new Date(today);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    const sprintParts = Math.min(3, sequence.length);
+    const sprintSessions = preservedSessions.filter(
+      ({ type }) => type === StudyPlanSessionType.SPRINT,
+    );
+    const initialSprintIndex =
+      examDate.getTime() - tomorrow.getTime() < 14 * DAY
+        ? sprintSessions.length % sprintParts
+        : 0;
+    const initialSprintChunks = initialSprintIndex
+      ? this.createRemainingSprintChunks(
+          sequence,
+          sprintSessions.slice(-initialSprintIndex),
+          sprintParts,
+        )
+      : [];
     const monday = new Date(today);
-    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
     const weekTopics = this.unique(
       preservedSessions
         .filter(
@@ -448,14 +465,14 @@ export class StudyService {
         )
         .flatMap(({ topicIds }) => topicIds),
     );
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
     const sessions = this.createSessions(
       tomorrow,
       examDate,
       sequence,
       sequenceIndex,
       weekTopics,
+      initialSprintIndex,
+      initialSprintChunks,
     );
 
     const pools = sessions.length
@@ -663,17 +680,22 @@ export class StudyService {
     sequence,
     initialSequenceIndex = 0,
     initialWeekTopics = [],
+    initialSprintIndex = 0,
+    initialSprintChunks = [],
   ) {
     const sessions = [];
     let sequenceIndex = initialSequenceIndex;
     let weekTopics = this.unique(initialWeekTopics);
+    const sprintParts = Math.min(3, sequence.length);
+    let sprintChunks = initialSprintChunks;
+    let sprintIndex = initialSprintIndex % sprintParts;
 
     for (
       const date = new Date(today);
       date <= lastDay;
-      date.setDate(date.getDate() + 1)
+      date.setUTCDate(date.getUTCDate() + 1)
     ) {
-      const weekday = date.getDay();
+      const weekday = date.getUTCDay();
       if (weekday === 0) {
         this.logger.log(`Fecha ${date.toISOString()}: domingo, sin sesión`);
         continue;
@@ -684,13 +706,14 @@ export class StudyService {
       }
 
       if (weekday === 6) {
+        const simulationTopics = this.unique(weekTopics);
         this.logger.log(
-          `Fecha ${date.toISOString()}: simulacro con topics=${weekTopics.join(',') || 'ninguno'}`,
+          `Fecha ${date.toISOString()}: simulacro con topics=${simulationTopics.join(',') || 'ninguno'}`,
         );
         sessions.push({
           date: new Date(date),
           type: StudyPlanSessionType.SIMULACRO,
-          topicIds: this.unique(weekTopics),
+          topicIds: simulationTopics,
         });
         continue;
       }
@@ -699,19 +722,33 @@ export class StudyService {
         (lastDay.getTime() - date.getTime()) / DAY,
       );
       const count = this.topicsPerDay(daysRemaining);
-      const topicIds = count
-        ? this.take(sequence, sequenceIndex, count)
-        : this.unique(sequence);
+      const isSprint = !count;
+      let topicIds;
+
+      if (isSprint) {
+        if (!sprintChunks.length || sprintIndex === 0) {
+          sprintChunks = this.createSprintChunks(sequence);
+        }
+        topicIds = sprintChunks[sprintIndex];
+      } else {
+        topicIds = this.take(sequence, sequenceIndex, count);
+      }
 
       if (count) {
         sequenceIndex =
           (sequenceIndex + Math.min(count, sequence.length)) % sequence.length;
+      } else {
+        this.logger.log(
+          `Fecha ${date.toISOString()}: sprint ${sprintIndex + 1}/${sprintParts}, ` +
+            `asignados=${topicIds.join(',')}`,
+        );
+        sprintIndex = (sprintIndex + 1) % sprintParts;
       }
 
       weekTopics.push(...topicIds);
       this.logger.log(
         `Fecha ${date.toISOString()}: días restantes=${daysRemaining}, ` +
-          `topics=${count || 'todos'}, tipo=${count ? 'NORMAL' : 'SPRINT'}, ` +
+          `topics=${count || topicIds.length}, tipo=${count ? 'NORMAL' : 'SPRINT'}, ` +
           `asignados=${topicIds.join(',')}`,
       );
       sessions.push({
@@ -722,6 +759,80 @@ export class StudyService {
     }
 
     return sessions;
+  }
+
+  private createSprintChunks(sequence) {
+    const chunks = this.splitSequence(this.shuffle(sequence), 3);
+
+    this.logger.log(
+      `Sprint dividido en ${chunks.length} sesiones: ` +
+        `${chunks.map((chunk) => chunk.join(',')).join(' | ')}`,
+    );
+
+    return chunks;
+  }
+
+  private createRemainingSprintChunks(sequence, completedSessions, parts) {
+    const completedChunks = completedSessions.map(({ topicIds }) =>
+      this.unique(topicIds),
+    );
+    const completedTopicIds = new Set(completedChunks.flat());
+    const remainingTopics = this.shuffle(
+      sequence.filter((topicId) => !completedTopicIds.has(topicId)),
+    );
+    const sizes = this.getSprintChunkSizes(sequence.length, parts);
+    const chunks = [...completedChunks];
+    let start = 0;
+
+    for (const size of sizes.slice(completedChunks.length)) {
+      chunks.push(remainingTopics.slice(start, start + size));
+      start += size;
+    }
+
+    this.logger.log(
+      `Sprint conservado y completado: ` +
+        `${chunks.map((chunk) => chunk.join(',')).join(' | ')}`,
+    );
+
+    return chunks;
+  }
+
+  private splitSequence(sequence, parts) {
+    const sizes = this.getSprintChunkSizes(sequence.length, parts);
+    const chunks = [];
+    let start = 0;
+
+    for (const size of sizes) {
+      chunks.push(sequence.slice(start, start + size));
+      start += size;
+    }
+
+    return chunks;
+  }
+
+  private getSprintChunkSizes(sequenceLength, parts) {
+    const totalParts = Math.min(parts, sequenceLength);
+    const baseSize = Math.floor(sequenceLength / totalParts);
+    const extraItems = sequenceLength % totalParts;
+
+    return Array.from(
+      { length: totalParts },
+      (_, index) => baseSize + (index < extraItems ? 1 : 0),
+    );
+  }
+
+  private shuffle(values) {
+    const shuffled = [...values];
+
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+      [shuffled[index], shuffled[randomIndex]] = [
+        shuffled[randomIndex],
+        shuffled[index],
+      ];
+    }
+
+    return shuffled;
   }
 
   private topicsPerDay(daysRemaining) {
