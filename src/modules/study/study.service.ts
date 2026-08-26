@@ -154,6 +154,7 @@ export class StudyService {
                 option2: true,
                 option3: true,
                 option4: true,
+                result: true,
                 topicId: true,
                 justification: true,
               },
@@ -177,6 +178,11 @@ export class StudyService {
     return session.quizzes.map((studyPlanQuiz) => ({
       id: studyPlanQuiz.quiz.id,
       optionSelected: studyPlanQuiz.optionSelected,
+      // La respuesta correcta solo se envía para sesiones ya realizadas.
+      // Así la sesión de hoy no expone las respuestas del examen.
+      ...(session.percentage !== null
+        ? { result: studyPlanQuiz.quiz.result }
+        : {}),
       title: studyPlanQuiz.quiz.title,
       option1: studyPlanQuiz.quiz.option1,
       option2: studyPlanQuiz.quiz.option2,
