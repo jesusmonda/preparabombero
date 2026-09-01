@@ -7,7 +7,12 @@ import * as bodyParser from 'body-parser';
 process.env.TZ = 'Europe/Madrid';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger:
+      process.env.ENVIRONMENT === 'prod'
+        ? ['error']
+        : ['log', 'error', 'warn', 'debug', 'verbose'],
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Cats example')

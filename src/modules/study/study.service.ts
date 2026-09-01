@@ -965,23 +965,31 @@ export class StudyService {
         ? pools.thematicStudyPlanTopicIds
         : session.studyPlanTopicIds;
 
-    const thematicPool = studyPlanTopicIds.flatMap(
-      (studyPlanTopicId) => pools.byStudyPlanTopic.get(studyPlanTopicId) ?? [],
+    const thematicPool = this.unique(
+      studyPlanTopicIds.flatMap(
+        (studyPlanTopicId) => pools.byStudyPlanTopic.get(studyPlanTopicId) ?? [],
+      ),
     );
     this.logger.log(
       `Seleccionando preguntas: fecha=${session.date.toISOString()}, ` +
         `tipo=${session.type}, studyPlanTopics=${studyPlanTopicIds.join(',') || 'todos'}, ` +
         `poolTemático=${thematicPool.length}`,
     );
+    const thematicPoolToUse = thematicPool.length ? thematicPool : pools.thematic;
     const selected = new Set(
-      this.sample(
-        thematicPool.length ? thematicPool : pools.thematic,
-        THEMATIC_QUESTIONS,
-        new Set(),
-      ),
+      this.sample(thematicPoolToUse, THEMATIC_QUESTIONS, new Set()),
     );
 
     if (selected.size < THEMATIC_QUESTIONS) {
+      this.logger.error(
+        `Preguntas temáticas insuficientes: ` +
+          `fecha=${session.date.toISOString()}, ` +
+          `tipo=${session.type}, ` +
+          `studyPlanTopics=${session.studyPlanTopicIds.join(',') || 'ninguno'}, ` +
+          `poolSesión=${thematicPool.length}, ` +
+          `poolUsado=${thematicPoolToUse.length}, ` +
+          `disponibles=${selected.size}, necesarias=${THEMATIC_QUESTIONS}`,
+      );
       throw new HttpException(
         'No hay suficientes preguntas temáticas para generar el plan',
         HttpStatus.BAD_REQUEST,
