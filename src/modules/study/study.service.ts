@@ -54,6 +54,7 @@ export class StudyService {
         date: true,
         type: true,
         percentage: true,
+        _count: { select: { quizzes: true } },
       },
     });
 
@@ -104,8 +105,9 @@ export class StudyService {
     const today = this.day(new Date());
 
     return sessionsWithThematicTopics.map(
-      ({ studyPlanId, studyPlanTopicIds, ...session }) => ({
+      ({ studyPlanId, studyPlanTopicIds, _count, ...session }) => ({
         ...session,
+        questionCount: _count.quizzes,
         topics: studyPlanTopicIds
           .map((studyPlanTopicId) =>
             topicNamesByPlan.get(studyPlanId)?.get(studyPlanTopicId),
