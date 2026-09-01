@@ -266,7 +266,7 @@ export class StudyService {
 
     if (!studyPlan) {
       throw new HttpException(
-        'Plan de estudio no encontrado',
+        'Plan de estudio no encontrado. Contacta con preparabombero2024@gmail.com para añadirlo.',
         HttpStatus.NOT_FOUND,
       );
     }
@@ -406,7 +406,7 @@ export class StudyService {
 
     if (!studyPlan) {
       throw new HttpException(
-        'Plan de estudio no encontrado',
+        'Plan de estudio no encontrado. Contacta con preparabombero2024@gmail.com para añadirlo.',
         HttpStatus.NOT_FOUND,
       );
     }
