@@ -979,38 +979,16 @@ export class StudyService {
     const selected = new Set(
       this.sample(thematicPoolToUse, THEMATIC_QUESTIONS, new Set()),
     );
-
-    if (selected.size < THEMATIC_QUESTIONS) {
-      this.logger.error(
-        `Preguntas temáticas insuficientes: ` +
-          `fecha=${session.date.toISOString()}, ` +
-          `tipo=${session.type}, ` +
-          `studyPlanTopics=${session.studyPlanTopicIds.join(',') || 'ninguno'}, ` +
-          `poolSesión=${thematicPool.length}, ` +
-          `poolUsado=${thematicPoolToUse.length}, ` +
-          `disponibles=${selected.size}, necesarias=${THEMATIC_QUESTIONS}`,
-      );
-      throw new HttpException(
-        'No hay suficientes preguntas temáticas para generar el plan',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    const thematicSelectedCount = selected.size;
 
     this.sample(pools.territorial, TERRITORIAL_QUESTIONS, selected).forEach(
       (id) => selected.add(id),
     );
 
     this.logger.log(
-      `Preguntas seleccionadas antes de validar: temáticas=${THEMATIC_QUESTIONS}, ` +
+      `Preguntas seleccionadas: temáticas=${thematicSelectedCount}, ` +
         `total=${selected.size}, poolTerritorial=${pools.territorial.length}`,
     );
-
-    if (selected.size < THEMATIC_QUESTIONS + TERRITORIAL_QUESTIONS) {
-      throw new HttpException(
-        'No hay suficientes preguntas territoriales para generar el plan',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
 
     return [...selected].map(Number);
   }
