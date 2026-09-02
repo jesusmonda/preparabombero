@@ -655,35 +655,36 @@ export class StudyService {
   }
 
   private createSequence(specific, legislation) {
-    const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
-    const divisor = gcd(specific.length, legislation.length);
-    const specificPerRound = Math.max(1, specific.length / divisor);
-    const legislationPerRound = Math.max(1, legislation.length / divisor);
     const sequence = [];
     let specificIndex = 0;
-    let legislationIndex = 0;
+    const ratio = legislation.length
+      ? specific.length / legislation.length
+      : null;
 
-    while (
-      specificIndex < specific.length ||
-      legislationIndex < legislation.length
-    ) {
-      for (let i = 0; i < specificPerRound; i += 1) {
-        if (specificIndex < specific.length) {
-          sequence.push(specific[specificIndex++]);
-        }
+    for (let legislationIndex = 0; legislationIndex < legislation.length; legislationIndex += 1) {
+      const targetSpecificCount = Math.round(
+        (legislationIndex + 1) * ratio,
+      );
+
+      while (specificIndex < targetSpecificCount) {
+        sequence.push(specific[specificIndex++]);
       }
 
-      for (let i = 0; i < legislationPerRound; i += 1) {
-        if (legislationIndex < legislation.length) {
-          sequence.push(legislation[legislationIndex++]);
-        }
-      }
+      sequence.push(legislation[legislationIndex]);
     }
 
+    while (specificIndex < specific.length) {
+      sequence.push(specific[specificIndex++]);
+    }
+
+    const ratioLabel = ratio !== null
+      ? `${ratio.toFixed(1)}:1`
+      : `${specific.length}:0`;
+
     this.logger.log(
-      `Secuencia creada: específicos=${specific.length}, ` +
+        `Secuencia creada: específicos=${specific.length}, ` +
         `legislación=${legislation.length}, ` +
-        `ratio=${specificPerRound}:${legislationPerRound}, ` +
+        `ratio=${ratioLabel}, ` +
         `secuencia=${sequence.join(' -> ')}`,
     );
 
