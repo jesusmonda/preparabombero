@@ -962,11 +962,14 @@ export class StudyService {
   }
 
   private selectQuizIds(session, pools) {
-    const studyPlanTopicIds =
-      session.type === StudyPlanSessionType.SIMULACRO &&
-      !session.studyPlanTopicIds.length
-        ? pools.thematicStudyPlanTopicIds
-        : session.studyPlanTopicIds;
+    if (!session.studyPlanTopicIds.length) {
+      this.logger.log(
+        `Sin studyPlanTopicIds: no se generan preguntas para la sesión=${session.date.toISOString()}`,
+      );
+      return [];
+    }
+
+    const studyPlanTopicIds = session.studyPlanTopicIds;
 
     const thematicPool = this.unique(
       studyPlanTopicIds.flatMap(
