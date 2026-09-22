@@ -34,7 +34,7 @@ export class UserController {
       throw new HttpException('Usuario no subscrito', HttpStatus.BAD_REQUEST);
     }
     
-    this.userService.deleteSubscription(user.subscription_id, user.id);
+    return await this.userService.deleteSubscription(user.subscription_id, user.id);
   }
 
   @UseGuards(UserGuard)

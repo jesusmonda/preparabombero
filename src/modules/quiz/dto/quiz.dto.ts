@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 
 export class QuizDto {
     @IsNotEmpty({ message: 'validation.NOT_EMPTY' })
@@ -27,6 +27,10 @@ export class QuizDto {
     @IsNotEmpty({ message: 'validation.NOT_EMPTY' })
     @IsNumber({}, {message: 'validation.NOT_NUMBER'})
     topicId: number;
+
+    @IsOptional()
+    @IsNumber({}, {message: 'validation.NOT_NUMBER'})
+    packId?: number;
 
     @IsNotEmpty({ message: 'validation.NOT_EMPTY' })
     @IsString({message: 'validation.NOT_STRING'})

@@ -39,6 +39,7 @@ export class ReportService {
         option4: true,
         result: false,
         topicId: true,
+        packId: true,
         justification: true,
         created_at: true,
         pdfId: true

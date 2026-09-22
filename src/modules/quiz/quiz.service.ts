@@ -62,11 +62,18 @@ export class QuizService {
       user = await this.userService.getUser(userId);
       subscribed = user.subscribed == true && user.subscription_id != null;
       const topicIds = !subscribed ? [662] : [value].flat();
+      const purchasedPackIds = await this.getPurchasedPackIds(userId);
 
       searchQuery = {
         topicId: {
           in: await this.getAllChildren(topicIds),
         },
+        OR: [
+          { packId: null },
+          ...(purchasedPackIds.length
+            ? [{ packId: { in: purchasedPackIds } }]
+            : []),
+        ],
       };
     }
 
@@ -83,6 +90,7 @@ export class QuizService {
     if (type == 'EXAM_PDF') {
       searchQuery = {
         pdfId: value,
+        packId: null,
       };
     }
 
@@ -120,6 +128,15 @@ export class QuizService {
       quizs = quizs.slice(0, subscribed ? requestedNumberOfQuestions : 20);
     }
     return quizs;
+  }
+
+  private async getPurchasedPackIds(userId: number): Promise<number[]> {
+    const userPacks = await this.prisma.userPack.findMany({
+      where: { userId: Number(userId) },
+      select: { packId: true },
+    });
+
+    return userPacks.map(({ packId }) => packId);
   }
 
   async findQuiz(quizId: number): Promise<Quiz> {

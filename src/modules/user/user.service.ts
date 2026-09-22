@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { User, QuizStat } from '@prisma/client';
 import { UserNotSensitive } from 'src/common/interfaces/user.interface';
 import { PrismaService } from 'src/common/services/database.service';
@@ -6,6 +6,7 @@ import Stripe from 'stripe';
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
   stripe: Stripe;
 
   constructor(private prisma: PrismaService) {
@@ -67,9 +68,23 @@ export class UserService {
     subscriptionId: string,
     userId: number,
   ): Promise<UserNotSensitive> {
-    await this.stripe.subscriptions.update(subscriptionId, {
-      cancel_at_period_end: true,
-    });
+    if (subscriptionId) {
+      try {
+        await this.stripe.subscriptions.update(subscriptionId, {
+          cancel_at_period_end: true,
+        });
+      } catch (error) {
+        const stripeError = error as Stripe.errors.StripeError;
+
+        if (stripeError.code !== 'resource_missing') {
+          throw error;
+        }
+
+        this.logger.warn(
+          `La suscripción ${subscriptionId} no existe en Stripe; se limpia el estado local`,
+        );
+      }
+    }
 
     return await this.prisma.user.update({
       select: {

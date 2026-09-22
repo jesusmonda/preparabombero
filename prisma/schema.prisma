@@ -27,6 +27,7 @@ model User {
   quizStats         QuizStat[]
   quizFavorite      QuizFavorite[]
   studyPlanSessions StudyPlanSession[]
+  userPacks         UserPack[]
 }
 
 model Pdf {
@@ -56,9 +57,9 @@ model Topic {
   created_at    DateTime @default(now())
   order         Int
 
-  quizzes         Quiz[]
-  parent          Topic?           @relation("Topics", fields: [parentId], references: [id], onDelete: Cascade)
-  topics          Topic[]          @relation("Topics")
+  quizzes Quiz[]
+  parent  Topic?  @relation("Topics", fields: [parentId], references: [id], onDelete: Cascade)
+  topics  Topic[] @relation("Topics")
 }
 
 model Quiz {
@@ -70,16 +71,45 @@ model Quiz {
   option4       String
   result        String
   topicId       Int?
+  packId        Int?
   justification String?
   created_at    DateTime @default(now())
   pdf_name      String?
   pdfId         Int      @default(0)
 
   topic             Topic?          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  pack              Pack?           @relation(fields: [packId], references: [id], onDelete: SetNull)
   pdf               Pdf             @relation(fields: [pdfId], references: [id], onDelete: Restrict)
   reports           Report[]
   quizzes_favorites QuizFavorite[]
   studyPlanQuizzes  StudyPlanQuiz[]
+
+  @@index([packId])
+}
+
+model Pack {
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  priceCents    Int
+  stripePriceId String?
+  createdAt     DateTime @default(now())
+
+  quizzes   Quiz[]
+  userPacks UserPack[]
+}
+
+model UserPack {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  packId    Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pack Pack @relation(fields: [packId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, packId])
+  @@index([packId])
 }
 
 model QuizFavorite {
@@ -134,13 +164,13 @@ model StudyPlanTopic {
 }
 
 model StudyPlanSession {
-  id                       Int                    @id @default(autoincrement())
-  studyPlanId              Int
-  userId                   Int
-  studyPlanTopicIds        Int[]
-  date                     DateTime
-  type                     StudyPlanSessionType
-  percentage               Float?
+  id                Int                  @id @default(autoincrement())
+  studyPlanId       Int
+  userId            Int
+  studyPlanTopicIds Int[]
+  date              DateTime
+  type              StudyPlanSessionType
+  percentage        Float?
 
   studyPlan StudyPlan       @relation(fields: [studyPlanId], references: [id], onDelete: Cascade)
   user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)

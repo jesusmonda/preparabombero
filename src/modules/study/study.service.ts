@@ -309,6 +309,7 @@ export class StudyService {
 
     const sequence = this.createSequence(topics.specific, topics.legislation);
     const pools = await this.createQuizPools(
+      userId,
       studyPlan.studyPlanTopics,
       sequence,
       topics.territorial,
@@ -493,6 +494,7 @@ export class StudyService {
 
     const pools = sessions.length
       ? await this.createQuizPools(
+          userId,
           studyPlan.studyPlanTopics,
           sequence,
           topics.territorial,
@@ -872,6 +874,7 @@ export class StudyService {
   }
 
   private async createQuizPools(
+    userId,
     studyPlanTopics,
     thematicStudyPlanTopicIds,
     territorialStudyPlanTopicIds,
@@ -904,8 +907,22 @@ export class StudyService {
       );
     }
 
+    const purchasedPacks = await this.prisma.userPack.findMany({
+      where: { userId: Number(userId) },
+      select: { packId: true },
+    });
+    const purchasedPackIds = purchasedPacks.map(({ packId }) => packId);
+
     const quizzes = await this.prisma.quiz.findMany({
-      where: { topicId: { in: [...allDescendantIds].map(Number) } },
+      where: {
+        topicId: { in: [...allDescendantIds].map(Number) },
+        OR: [
+          { packId: null },
+          ...(purchasedPackIds.length
+            ? [{ packId: { in: purchasedPackIds } }]
+            : []),
+        ],
+      },
       select: { id: true, topicId: true },
     });
     this.logger.log(`Quizzes encontrados para los pools: ${quizzes.length}`);

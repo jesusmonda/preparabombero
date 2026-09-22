@@ -21,6 +21,7 @@ import { WebhookModule } from './modules/webhook/webhook.module';
 import { ConfigModule } from '@nestjs/config';
 import { PdfModule } from './modules/pdf/pdf.module';
 import { StudyModule } from './modules/study/study.module';
+import { PackModule } from './modules/pack/pack.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { StudyModule } from './modules/study/study.module';
     }),
     PdfModule,
     StudyModule,
+    PackModule,
   ],
   controllers: [AppController],
   providers: [

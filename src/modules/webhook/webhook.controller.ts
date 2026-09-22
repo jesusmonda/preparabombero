@@ -11,6 +11,11 @@ export class WebhookController {
   @Post('')
   async webhook(@Body() body: any) {
     Logger.log(JSON.stringify(body))
+    if (body.type == "checkout.session.completed") {
+      Logger.log("Pack checkout completed")
+      return await this.webhookService.packCheckoutCompleted(body.data.object);
+    }
+
     if (body.type == "customer.subscription.deleted") {
       Logger.log("Deleting subscription")
       return await this.subscriptionDeleted(body);
