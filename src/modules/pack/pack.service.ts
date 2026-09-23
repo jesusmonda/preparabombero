@@ -16,16 +16,78 @@ export class PackService {
     });
   }
 
-  async findAll(userId: number, search?: string) {
+  async getConfiguration() {
+    const rows = await this.prisma.pack.findMany({
+      select: {
+        comunidad: true,
+        ciudad: true,
+        administracion: true,
+      },
+      orderBy: [
+        { comunidad: 'asc' },
+        { ciudad: 'asc' },
+        { administracion: 'asc' },
+      ],
+    });
+
+    const result = Object.create(null);
+
+    for (const row of rows) {
+      if (!row.comunidad) continue;
+
+      result[row.comunidad] ??= {};
+
+      if (!row.ciudad) continue;
+      result[row.comunidad][row.ciudad] ??= [];
+
+      if (
+        row.administracion &&
+        !result[row.comunidad][row.ciudad].includes(row.administracion)
+      ) {
+        result[row.comunidad][row.ciudad].push(row.administracion);
+      }
+    }
+
+    return result;
+  }
+
+  async findAll(
+    userId: number,
+    search?: string,
+    comunidad?: string,
+    ciudad?: string,
+    administracion?: string,
+  ) {
+    const filters: any[] = [];
+
+    if (search) {
+      filters.push({
+        OR: [
+          { nombre: { contains: search, mode: 'insensitive' } },
+          { comunidad: { contains: search, mode: 'insensitive' } },
+          { ciudad: { contains: search, mode: 'insensitive' } },
+          { administracion: { contains: search, mode: 'insensitive' } },
+          { check1: { contains: search, mode: 'insensitive' } },
+          { check2: { contains: search, mode: 'insensitive' } },
+          { check3: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    if (comunidad) {
+      filters.push({ comunidad: { equals: comunidad, mode: 'insensitive' } });
+    }
+    if (ciudad) {
+      filters.push({ ciudad: { equals: ciudad, mode: 'insensitive' } });
+    }
+    if (administracion) {
+      filters.push({
+        administracion: { equals: administracion, mode: 'insensitive' },
+      });
+    }
+
     const packs = await this.prisma.pack.findMany({
-      where: search
-        ? {
-            OR: [
-              { name: { contains: search, mode: 'insensitive' } },
-              { description: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : undefined,
+      where: filters.length ? { AND: filters } : undefined,
       orderBy: { createdAt: 'desc' },
       include: {
         _count: { select: { quizzes: true } },
@@ -108,8 +170,13 @@ export class PackService {
         pack: {
           select: {
             id: true,
-            name: true,
-            description: true,
+            nombre: true,
+            comunidad: true,
+            ciudad: true,
+            administracion: true,
+            check1: true,
+            check2: true,
+            check3: true,
           },
         },
       },

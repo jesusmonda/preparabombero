@@ -89,8 +89,13 @@ model Quiz {
 
 model Pack {
   id            Int      @id @default(autoincrement())
-  name          String
-  description   String?
+  nombre        String
+  comunidad     String?
+  ciudad        String?
+  administracion String?
+  check1        String?
+  check2        String?
+  check3        String?
   priceCents    Int
   stripePriceId String?
   createdAt     DateTime @default(now())

@@ -16,10 +16,28 @@ import { PackService } from './pack.service';
 export class PackController {
   constructor(private readonly packService: PackService) {}
 
+  @Get('configuration')
+  @UseGuards(UserGuard)
+  getConfiguration() {
+    return this.packService.getConfiguration();
+  }
+
   @Get()
   @UseGuards(UserGuard)
-  findAll(@Query('search') search: string, @Request() request: Request) {
-    return this.packService.findAll(request['user'].userId, search);
+  findAll(
+    @Query('search') search: string,
+    @Query('comunidad') comunidad: string,
+    @Query('ciudad') ciudad: string,
+    @Query('administracion') administracion: string,
+    @Request() request: Request,
+  ) {
+    return this.packService.findAll(
+      request['user'].userId,
+      search,
+      comunidad,
+      ciudad,
+      administracion,
+    );
   }
 
   @Get(':id/questions')
