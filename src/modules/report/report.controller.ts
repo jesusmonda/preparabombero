@@ -1,4 +1,5 @@
-import { Controller, BadRequestException, Get, Body, Param, Delete, Post, UseGuards, HttpStatus, HttpException} from '@nestjs/common';
+import { Controller, Get, Body, Param, Delete, Post, UseGuards, HttpStatus, HttpException, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { ReportService } from './report.service';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { UserGuard } from 'src/common/guards/user.guard';
@@ -23,8 +24,12 @@ export class ReportController {
   }
 
   @Post()
-  async create(@Body() createReportDto: CreateReportDto) {
-    return await this.reportService.create(createReportDto);
+  @UseGuards(UserGuard)
+  async create(@Body() createReportDto: CreateReportDto, @Req() request: Request) {
+    return await this.reportService.create(
+      request['user'].userId,
+      createReportDto,
+    );
   }
 
   @Delete(':id')

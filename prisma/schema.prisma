@@ -28,6 +28,7 @@ model User {
   quizFavorite      QuizFavorite[]
   studyPlanSessions StudyPlanSession[]
   userPacks         UserPack[]
+  reports           Report[]
 }
 
 model Pdf {
@@ -208,7 +209,11 @@ model Report {
   id     Int    @id @default(autoincrement())
   reason String @unique
   quizId Int
+  userId Int?
   quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
 }
 
 model Info {
