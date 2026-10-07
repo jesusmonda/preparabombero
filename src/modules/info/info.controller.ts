@@ -10,10 +10,10 @@ export class InfoController {
 
   @Get('')
   async findAll() {
-    let response: InfoOmitId = await this.infoService.getAll();
+    const response: InfoOmitId = await this.infoService.getAll();
     if (response == null) {
-      await this.infoService.create({title: '', description: ''});
-      return {title: '', description: ''}
+      await this.infoService.create({ title: '', description: '' });
+      return { title: '', description: '', announcementData: null };
     }
 
     return response;
@@ -24,4 +24,5 @@ export class InfoController {
   async update(@Body() updateInfoDto: UpdateInfoDto) {
     return await this.infoService.update(updateInfoDto);
   }
+
 }

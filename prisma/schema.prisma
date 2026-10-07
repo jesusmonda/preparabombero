@@ -217,9 +217,10 @@ model Report {
 }
 
 model Info {
-  id          Int    @id @default(0)
-  title       String @unique
-  description String @unique
+  id               Int    @id @default(0)
+  title            String @unique
+  description      String @unique
+  announcementData Json?
 }
 
 enum UserRole {
