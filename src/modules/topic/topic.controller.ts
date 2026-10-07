@@ -9,6 +9,8 @@ import { CreateTopicDto } from './dto/create-topic.dto';
 type TopicsResponse = {
   [key: string]: (TopicAndTopics & {
     quizCount: number;
+    availableQuizCount: number;
+    totalQuizCount: number;
     expanded: boolean;
   })[];
 };
@@ -41,9 +43,12 @@ export class TopicController {
 
   transformTopics = (topics: Topic[], quizzesCount: QuizCount[]): TopicsResponse => {
     // Función auxiliar para obtener el conteo de quizzes para un topic
-    const getQuizCount = (topicId: number): number => {
+    const getQuizCounts = (topicId: number) => {
       const quizCount = quizzesCount.find(q => q.topicId === topicId);
-      return quizCount ? quizCount._count.topicId : 0;
+      return {
+        available: quizCount?.availableCount ?? 0,
+        total: quizCount?._count.topicId ?? 0,
+      };
     };
   
     // Crear un mapa de todos los topics por id
@@ -58,12 +63,13 @@ export class TopicController {
   
     // Función para transformar un solo topic
     const transformTopic = (topic: any): any => {
-      const directQuizCount = getQuizCount(topic.id);
+      const directQuizCounts = getQuizCounts(topic.id);
       const topics = topic.topics
         .map(transformTopic)
         .sort((a, b) => a.order - b.order);
       
-      const totalQuizCount = directQuizCount + topics.reduce((sum, sub) => sum + sub.quizCount, 0);
+      const availableQuizCount = directQuizCounts.available + topics.reduce((sum, sub) => sum + sub.availableQuizCount, 0);
+      const totalQuizCount = directQuizCounts.total + topics.reduce((sum, sub) => sum + sub.totalQuizCount, 0);
   
       return {
         id: topic.id,
@@ -73,6 +79,8 @@ export class TopicController {
         parentId: topic.parentId,
         expanded: !!topic.categoryTitle,
         quizCount: totalQuizCount,
+        availableQuizCount,
+        totalQuizCount,
         created_at: topic.created_at,
         order: topic.order,
         topics
