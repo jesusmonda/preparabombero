@@ -1,6 +1,7 @@
-import { Controller, BadRequestException, Get, Post, Put, Delete, Body, HttpStatus, Param, HttpException, UseGuards } from '@nestjs/common';
+import { Controller, BadRequestException, Get, Post, Put, Delete, Body, HttpStatus, Param, HttpException, Request, UseGuards } from '@nestjs/common';
 import { TopicService } from './topic.service';
 import { UserGuard } from 'src/common/guards/user.guard';
+import { OptionalUserGuard } from 'src/common/guards/optional-user.guard';
 import { QuizCount, TopicAndTopics } from 'src/common/interfaces/topic.interface';
 import { Topic } from '@prisma/client';
 import { AdminGuard } from 'src/common/guards/admin.guard';
@@ -20,9 +21,12 @@ export class TopicController {
   constructor(private readonly topicService: TopicService) {}
 
   @Get()
-  async findAll() {
+  @UseGuards(OptionalUserGuard)
+  async findAll(@Request() request: Request) {
     const topics: TopicAndTopics[] = await this.topicService.findTopics();
-    const quizzesCount: QuizCount[] = await this.topicService.quizCount();
+    const quizzesCount: QuizCount[] = await this.topicService.quizCount(
+      request['user']?.userId,
+    );
     return this.transformTopics(topics, quizzesCount)
   }
 

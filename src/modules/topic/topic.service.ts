@@ -69,7 +69,25 @@ export class TopicService {
     });
   }
 
-  async quizCount() {
+  async quizCount(userId?: number) {
+    const purchasedPackIds = userId
+      ? (
+          await this.prisma.userPack.findMany({
+            where: { userId: Number(userId) },
+            select: { packId: true },
+          })
+        ).map(({ packId }) => packId)
+      : [];
+
+    const availableWhere = purchasedPackIds.length
+      ? {
+          OR: [
+            { packId: null },
+            { packId: { in: purchasedPackIds } },
+          ],
+        }
+      : { packId: null };
+
     const [totalCounts, availableCounts] = await Promise.all([
       this.prisma.quiz.groupBy({
         by: ['topicId'],
@@ -78,7 +96,7 @@ export class TopicService {
         },
       }),
       this.prisma.quiz.groupBy({
-        where: { packId: null },
+        where: availableWhere,
         by: ['topicId'],
         _count: {
           topicId: true,
