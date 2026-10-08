@@ -76,11 +76,11 @@ model Quiz {
   justification String?
   created_at    DateTime @default(now())
   pdf_name      String?
-  pdfId         Int      @default(0)
+  pdfId         Int?
 
   topic             Topic?          @relation(fields: [topicId], references: [id], onDelete: Cascade)
   pack              Pack?           @relation(fields: [packId], references: [id], onDelete: SetNull)
-  pdf               Pdf             @relation(fields: [pdfId], references: [id], onDelete: Restrict)
+  pdf               Pdf?            @relation(fields: [pdfId], references: [id], onDelete: Restrict)
   reports           Report[]
   quizzes_favorites QuizFavorite[]
   studyPlanQuizzes  StudyPlanQuiz[]
