@@ -144,6 +144,9 @@ export class PackService {
           url: redirectUrl,
         },
       },
+      invoice_creation: {
+         enabled: true,
+      },
       allow_promotion_codes: false,
       billing_address_collection: 'auto',
       metadata,
