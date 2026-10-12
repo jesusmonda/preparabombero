@@ -12,8 +12,15 @@ export class WebhookController {
   async webhook(@Body() body: any) {
     Logger.log(JSON.stringify(body))
     if (body.type == "checkout.session.completed") {
+      const session = body.data?.object;
+
+      if (session?.mode !== 'payment') {
+        Logger.log("Ignoring non-pack checkout")
+        return { received: true, processed: false };
+      }
+
       Logger.log("Pack checkout completed")
-      return await this.webhookService.packCheckoutCompleted(body.data.object);
+      return await this.webhookService.packCheckoutCompleted(session);
     }
 
     if (body.type == "customer.subscription.deleted") {
@@ -22,6 +29,14 @@ export class WebhookController {
     }
 
     if (body.type == "invoice.paid") {
+      const invoice = body.data?.object;
+      const userId = invoice?.subscription_details?.metadata?.userId;
+
+      if (!invoice?.subscription || !userId) {
+        Logger.log("Ignoring invoice without subscription metadata")
+        return { received: true, processed: false };
+      }
+
       Logger.log("Subscription payed, creating subscription")
       return await this.subscriptionCreate(body);
     }
@@ -77,7 +92,19 @@ export class WebhookController {
       throw new HttpException('Evento incorrecto', HttpStatus.BAD_REQUEST);
     }
 
-    const user: User = await this.userService.getUser(body.data.object.subscription_details.metadata.userId);
+    const invoice = body.data?.object;
+    const userId = invoice?.subscription_details?.metadata?.userId;
+
+    if (!invoice?.subscription || !userId) {
+      Logger.log("Ignoring invoice without subscription metadata");
+      return { received: true, processed: false };
+    }
+
+    const user: User = await this.userService.getUser(userId);
+    if (!user) {
+      Logger.log(`User not found for invoice ${invoice.id}`);
+      return { received: true, processed: false };
+    }
     if (user.id == 2){
       Logger.log(`Admin user is not be able to unsubscribed`);
       throw new HttpException('El usuario de admin no pueden subscribirse', HttpStatus.BAD_REQUEST);
@@ -89,6 +116,6 @@ export class WebhookController {
 
     Logger.log(`Creating subscription`);
     console.log(body)
-    return this.webhookService.updateSubscription(user.id, "CREATED", body.data.object.subscription);
+    return this.webhookService.updateSubscription(user.id, "CREATED", invoice.subscription);
   }
 }
