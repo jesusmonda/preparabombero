@@ -79,6 +79,7 @@ export class TopicController {
         id: topic.id,
         title: topic.title,
         url: topic.url,
+        videoUrl: topic.videoUrl,
         categoryTitle: topic.categoryTitle || null,
         parentId: topic.parentId,
         expanded: !!topic.categoryTitle,
